@@ -1,5 +1,4 @@
 # casas = 20.
-#   (1-6 = 60(compra)30(aluguel)) / (7-12 = 50(c)20(a)) / (13-18 = 80(c)50(a)) / (19-20 = 100(c)70(a))
 # saldo inicial = 300 (100 ao completar a volta).
 # 4 jogadores, impulsivo, exigente, cauteloso, aleatório.
 # 1000 rodadas acaba, maior saldo, desempate é a ordem de jogada.
