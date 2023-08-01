@@ -1,29 +1,40 @@
 import random
 import tkinter as tk
 
-def imprime(matriz):
-    for linha in range(len(matriz)):
-        for coluna in range(len(matriz)):
-            print(matriz[linha][coluna], end='  ')
-        print()
-
-
 class Tela:
     def __init__(self, master: tk.Tk, n_bombs=99, ordem=20):
         self.janela = master
         self.janela.title('É o Minas é.')
-        # self.janela.geometry('400x400')
         self.num_bombas = n_bombs
-        self.ordem = ordem
+        self.ordem=ordem
+        self.start()
+    
+    def start(self):
         self.on_game = 0
         self.table = [['n' for j in range(self.ordem)] for i in range(self.ordem)]
 
         for linha in range(len(self.table)):
             for coluna in range(len(self.table)):
-                self.btn = tk.Button(self.janela, text='', \
+                btn = tk.Button(self.janela, text='', \
                         width=2, height=1, \
                         command=lambda position=(linha, coluna):self.control(position))
-                self.btn.grid(row=linha, column=coluna, sticky=tk.NSEW, padx=1, pady=1)
+                btn.bind("<ButtonPress-3>", lambda event, position=(linha, coluna):self.changeButton(event, position))
+                btn.grid(row=linha, column=coluna, sticky=tk.NSEW, padx=1, pady=1)
+    
+    def button_GoBackNormal(self, event, position):
+        linha, coluna = position[0], position[1]
+        btn = tk.Button(self.janela, text='', \
+                        width=2, height=1, \
+                        command=lambda position=(linha, coluna):self.control(position))
+        btn.bind("<ButtonPress-3>", lambda event, position=(linha, coluna):self.changeButton(event, position))
+        btn.grid(row=linha, column=coluna, sticky=tk.NSEW, padx=1, pady=1)
+
+    def changeButton(self, event, position):
+        linha, coluna = position[0], position[1]
+        if self.on_game:
+            flagButton = tk.Button(self.janela, text="\U0001F3F4", fg='red')
+            flagButton.bind("<ButtonPress-3>", lambda event, position=(linha, coluna):self.button_GoBackNormal(event, position))
+            flagButton.grid(row=linha, column=coluna, sticky=tk.NSEW, padx=1, pady=1)
 
     def create_protected(self, pos):
         linha, coluna = pos[0], pos[1]
@@ -137,15 +148,41 @@ class Tela:
     def change_text(self, pos):
         linha, coluna = pos[0], pos[1]
         if self.table[linha][coluna] == 'x':
-            tk.Label(self.janela, text=self.table[linha][coluna], \
+            tk.Label(self.janela, text='\U0001F4A3', \
                         borderwidth=3, relief='groove', fg='red') \
                 .grid(row=linha, column=coluna, \
                         sticky=tk.NSEW, padx=1, pady=1)
+            self.Restart()
         else:
             tk.Label(self.janela, text=self.table[linha][coluna], \
                         borderwidth=3, relief='groove', fg='blue') \
                 .grid(row=linha, column=coluna, \
                         sticky=tk.NSEW, padx=1, pady=1)
+    
+    def disable_event(self):
+        pass
+
+    def Restart(self):
+        # self.janela.withdraw()
+        self.restartTopLevel = tk.Toplevel()
+        self.restartTopLevel.grab_set()
+        self.restartTopLevel.resizable(False, False)
+        self.restartTopLevel.protocol("WM_DELETE_WINDOW", self.disable_event)
+        # self.restartTopLevel.bind("<Destroy>", self.reopen)
+        fontBtns = 'Helvetica 12 bold'
+        restartButton = tk.Button(self.restartTopLevel, text='Jogar novamente', font=fontBtns, command=self.RestartGame).grid()
+        restartButton = tk.Button(self.restartTopLevel, text='Sair', font=fontBtns, command=self.sair).grid(row=0, column=1)
+    
+    def reopen(self, e):
+        self.janela.deiconify()
+
+    def RestartGame(self):
+        self.restartTopLevel.destroy()
+        self.start()
+
+    def sair(self):
+        self.janela.destroy()
+        
     def gera_bombas(self, num_bombs, protected_area=None):
         opcoes = []
         for i in range(self.ordem):
@@ -217,8 +254,7 @@ class Tela:
                 
                 self.table[linha][coluna] = contador
 
-app = tk.Tk()
-master = Tela(app)
-app.mainloop()
-
-
+if __name__ == '__main__':
+    app = tk.Tk()
+    master = Tela(app)
+    app.mainloop()
