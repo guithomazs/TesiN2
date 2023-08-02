@@ -10,12 +10,17 @@ class Tela:
         self.start()
     
     def start(self):
+        self.labelTimer = tk.Label(self.janela, text='0', font='Helvetica 18 bold')
+        self.labelTimer.grid(row=0,columnspan=self.ordem, sticky=tk.NSEW)
+        self.frameBombs = tk.Frame(self.janela)
+        self.frameBombs.grid(row=1, columnspan=self.ordem)
         self.on_game = 0
+        self.timer = 0
         self.table = [['n' for j in range(self.ordem)] for i in range(self.ordem)]
 
         for linha in range(len(self.table)):
             for coluna in range(len(self.table)):
-                btn = tk.Button(self.janela, text='', \
+                btn = tk.Button(self.frameBombs, text='', \
                         width=2, height=1, \
                         command=lambda position=(linha, coluna):self.control(position))
                 btn.bind("<ButtonPress-3>", lambda event, position=(linha, coluna):self.changeButton(event, position))
@@ -23,7 +28,7 @@ class Tela:
     
     def button_GoBackNormal(self, event, position):
         linha, coluna = position[0], position[1]
-        btn = tk.Button(self.janela, text='', \
+        btn = tk.Button(self.frameBombs, text='', \
                         width=2, height=1, \
                         command=lambda position=(linha, coluna):self.control(position))
         btn.bind("<ButtonPress-3>", lambda event, position=(linha, coluna):self.changeButton(event, position))
@@ -32,7 +37,7 @@ class Tela:
     def changeButton(self, event, position):
         linha, coluna = position[0], position[1]
         if self.on_game:
-            flagButton = tk.Button(self.janela, text="\U0001F3F4", fg='red')
+            flagButton = tk.Button(self.frameBombs, text="\U0001F3F4", fg='red')
             flagButton.bind("<ButtonPress-3>", lambda event, position=(linha, coluna):self.button_GoBackNormal(event, position))
             flagButton.grid(row=linha, column=coluna, sticky=tk.NSEW, padx=1, pady=1)
 
@@ -78,12 +83,20 @@ class Tela:
             protected_area.append([linha+1, coluna+1])
         return protected_area
     
+    def updateClock(self):
+        if self.on_game:
+            self.timer += 1
+            self.labelTimer.config(text=self.timer)
+            self.labelTimer.after(1000, self.updateClock)
+            
+    
     def control(self, pos):
         linha, coluna = pos[0], pos[1]
         if not self.on_game:
             self.gera_bombas(self.num_bombas, self.create_protected(pos))
             self.conta_bombas()
             self.on_game = 1
+            self.updateClock()
         
         already_done = []
         open_list = [[linha, coluna]]
@@ -148,13 +161,13 @@ class Tela:
     def change_text(self, pos):
         linha, coluna = pos[0], pos[1]
         if self.table[linha][coluna] == 'x':
-            tk.Label(self.janela, text='\U0001F4A3', \
+            tk.Label(self.frameBombs, text='\U0001F4A3', \
                         borderwidth=3, relief='groove', fg='red') \
                 .grid(row=linha, column=coluna, \
                         sticky=tk.NSEW, padx=1, pady=1)
             self.Restart()
         else:
-            tk.Label(self.janela, text=self.table[linha][coluna], \
+            tk.Label(self.frameBombs, text=self.table[linha][coluna], \
                         borderwidth=3, relief='groove', fg='blue') \
                 .grid(row=linha, column=coluna, \
                         sticky=tk.NSEW, padx=1, pady=1)
@@ -164,14 +177,17 @@ class Tela:
 
     def Restart(self):
         # self.janela.withdraw()
+        self.on_game = 0
         self.restartTopLevel = tk.Toplevel()
         self.restartTopLevel.grab_set()
         self.restartTopLevel.resizable(False, False)
         self.restartTopLevel.protocol("WM_DELETE_WINDOW", self.disable_event)
         # self.restartTopLevel.bind("<Destroy>", self.reopen)
         fontBtns = 'Helvetica 12 bold'
-        restartButton = tk.Button(self.restartTopLevel, text='Jogar novamente', font=fontBtns, command=self.RestartGame).grid()
-        restartButton = tk.Button(self.restartTopLevel, text='Sair', font=fontBtns, command=self.sair).grid(row=0, column=1)
+        restartButton = tk.Button(self.restartTopLevel, text='Jogar novamente', font=fontBtns, command=self.RestartGame)
+        restartButton.grid()
+        quitButton = tk.Button(self.restartTopLevel, text='Sair', font=fontBtns, command=self.sair)
+        quitButton.grid(row=0, column=1)
     
     def reopen(self, e):
         self.janela.deiconify()
