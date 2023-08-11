@@ -1,14 +1,19 @@
 import tkinter as tk
 from tkinter import messagebox
 import random
+import time
+
 
 GAME_ROWS = 5
 GAME_COLUMNS = 6
+PLAYER_ONE_COLOR = 'green'
+PLAYER_TWO_COLOR = 'RED'
 def showMat(mat):
     for i in range(GAME_ROWS):
         for j in range(GAME_COLUMNS):
             print(mat[i][j], ' ', end='')
         print()
+
 
 class MemoryGame:
     def __init__(self, master:tk.Tk):
@@ -23,14 +28,20 @@ class MemoryGame:
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         self.startGame()
-
+    
+    def _slots(self, positions=False):
+        if positions:
+            return [[row, column] for column in range(GAME_COLUMNS) for row in range(GAME_ROWS)]
+        # return [[None for column in range(GAME_COLUMNS)] for row in range(GAME_ROWS)]
+        return [[None] * GAME_COLUMNS for row in range(GAME_ROWS)]
+    
     def startGame(self):
         '''
         we are playing with 15 emojis as the items, 
         so the window game will have 5 rows and 6 
         columns what means it will have 30 slots.
         '''
-        self.slots = [[None for column in range(GAME_COLUMNS)] for row in range(GAME_ROWS)]
+        self.slots = self._slots()
         print(self.slots)
         self.choiceOne, self.choiceTwo = None, None
         self.ButtonOne:None | tk.Button = None
@@ -49,7 +60,7 @@ class MemoryGame:
         e as preenche de acordo com os emojis da lista de emoji, definindo posições aleatórias
         para os pares de emoji. (itens do jogo da memória)
         '''
-        freeSlots = [[row, column] for column in range(GAME_COLUMNS) for row in range(GAME_ROWS)]
+        freeSlots = self._slots(positions=True)
         print(freeSlots)
         for item in self.emojiList:
             slot1, slot2 = random.sample(freeSlots, k=2)
@@ -66,22 +77,44 @@ class MemoryGame:
         subFont = 'Helvetica 14'
 
         framePlayerOne = tk.Frame(self.frameHeader)
-        tk.Label(framePlayerOne, text='Jogador 1', font=titleFont).grid()
-        self.LabelPlayerOneCards = tk.Label(framePlayerOne, 
-                                            text=f'Cartas: {len(self.PlayerOneCards)}', 
-                                            font=subFont)
+        tk.Label(framePlayerOne, 
+                 text='Jogador 1', 
+                 font=titleFont, 
+                 fg=PLAYER_ONE_COLOR
+        ).grid()
+        self.LabelPlayerOneCards = tk.Label(
+            framePlayerOne, 
+            text=f'Cartas: {len(self.PlayerOneCards)}', 
+            font=subFont,
+            fg=PLAYER_ONE_COLOR
+        )
         self.LabelPlayerOneCards.grid()
         
         frameTurn = tk.Frame(self.frameHeader)
-        tk.Label(frameTurn, text='Vez do jogador:', font=titleFont).grid()
-        self.LabelTurn = tk.Label(frameTurn, text=1 if self.PlayerTurn else 2, font=subFont)
+        tk.Label(frameTurn, 
+                 text='Vez do jogador:', 
+                 font=titleFont
+        ).grid()
+        self.LabelTurn = tk.Label(
+            frameTurn, 
+            text=1 if self.PlayerTurn else 2, 
+            font=subFont
+        )
         self.LabelTurn.grid()
 
         framePlayerTwo = tk.Frame(self.frameHeader)
-        tk.Label(framePlayerTwo, text='Jogador 2', font=titleFont).grid()
-        self.LabelPlayerTwoCards = tk.Label(framePlayerTwo, 
-                                            text=f'Cartas: {len(self.PlayerTwoCards)}', 
-                                            font=subFont)
+        tk.Label(
+            framePlayerTwo, 
+            text='Jogador 2', 
+            font=titleFont, 
+            fg=PLAYER_TWO_COLOR
+        ).grid()
+        self.LabelPlayerTwoCards = tk.Label(
+            framePlayerTwo, 
+            text=f'Cartas: {len(self.PlayerTwoCards)}', 
+            font=subFont,
+            fg=PLAYER_TWO_COLOR
+        )
         self.LabelPlayerTwoCards.grid()
 
         framePlayerOne.grid(row=0, column=0, rowspan=2, columnspan=2, sticky=tk.NSEW)
@@ -97,17 +130,15 @@ class MemoryGame:
         cria os botões clicáveis com a função de mudar o texto
         '''
         self.frameButtons = tk.Frame(self.root)
-        self.buttonsList = []
         for row in range(GAME_ROWS):
             for column in range(GAME_COLUMNS):
-                btn = tk.Button(self.frameButtons, text='', \
-                        width=5, height=2, relief='solid', font='None 28 bold', \
+                btn = tk.Button(self.frameButtons, text='', 
+                        width=5, height=2, relief='solid', font='None 28 bold', 
                         # command=lambda position=(row, column):self.control(position))
                 )
-                self.buttonsList.append(btn)
                 btn.config(command= 
                          lambda 
-                         button=self.buttonsList[-1],
+                         button=btn,
                          position=(row, column)
                          :
                          self.control(button, position))
@@ -119,9 +150,12 @@ class MemoryGame:
         if not self.choiceOne:
             self.ButtonOne = button
             self.click1(button, position)
-        elif not self.choiceTwo:
+        elif not self.choiceTwo and button != self.ButtonOne:
             self.ButtonTwo = button
             self.click2(button, position)
+            self.root.update()
+            time.sleep(0.6)
+            self.validate()
 
     def click1(self, button:tk.Button, position):
         row, column = position
@@ -131,18 +165,20 @@ class MemoryGame:
     def click2(self, button:tk.Button, position):
         row, column = position
         self.choiceTwo = self.slots[row][column]
-        # print(self.choiceOne, self.choiceTwo)
-        button.config(text=self.choiceTwo)
-        self.validate()
+        button.config(text=self.choiceTwo)   
 
     def validate(self):
         if self.choiceOne == self.choiceTwo:
             self.discoveredCards += 1
             self.ButtonOne.config(state='disabled')
+            self.ButtonOne.config(bg=PLAYER_ONE_COLOR if self.PlayerTurn else PLAYER_TWO_COLOR)
             self.ButtonTwo.config(state='disabled')
+            self.ButtonTwo.config(bg=PLAYER_ONE_COLOR if self.PlayerTurn else PLAYER_TWO_COLOR)
             
-            self.PlayerOneCards.append(self.choiceOne) if self.PlayerTurn \
+            (
+                self.PlayerOneCards.append(self.choiceOne) if self.PlayerTurn 
                 else self.PlayerTwoCards.append(self.choiceOne)
+            )
             self.LabelPlayerOneCards.config(text=f'Cartas: {len(self.PlayerOneCards)}')
             self.LabelPlayerTwoCards.config(text=f'Cartas: {len(self.PlayerTwoCards)}')
             self.choiceOne, self.choiceTwo = None, None
@@ -152,7 +188,7 @@ class MemoryGame:
                 print(len(self.PlayerOneCards), len(self.PlayerTwoCards))
                 self.endGame()
         else:
-            messagebox.showinfo('Troca de jogadores', 'Cartas não iguais, troca de jogadores.')
+            # messagebox.showinfo('Troca de jogadores', 'Cartas não iguais, troca de jogadores.')
             self.PlayerTurn = not self.PlayerTurn
             self.LabelTurn.config(text=1 if self.PlayerTurn else 2)
             self.ButtonOne.config(text='')
