@@ -134,7 +134,7 @@ class Tela:
             tk.Button(topLevelWinner, text='Jogar Novamente', font='Helvetica 12 bold',
                       command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=tk.NSEW)
             tk.Button(topLevelWinner, text='Sair', font='Helvetica 12 bold',
-                      command=self.sair).grid(row=1, column=1, sticky=tk.NSEW, columnspan=2)
+                      command=self.close).grid(row=1, column=1, sticky=tk.NSEW, columnspan=2)
 
     def close(self):
         self.janela.destroy()
@@ -142,9 +142,6 @@ class Tela:
     def RestartGame(self, toplevel):
         toplevel.destroy()
         self.start()
-
-    def sair(self):
-        self.janela.destroy()
 
 if __name__ == '__main__':
     app = tk.Tk()

@@ -3,11 +3,11 @@ from tkinter import messagebox
 import random
 import time
 
-
 GAME_ROWS = 5
 GAME_COLUMNS = 6
-PLAYER_ONE_COLOR = 'green'
+PLAYER_ONE_COLOR = 'lime'
 PLAYER_TWO_COLOR = 'RED'
+
 def showMat(mat):
     for i in range(GAME_ROWS):
         for j in range(GAME_COLUMNS):
@@ -42,7 +42,6 @@ class MemoryGame:
         columns what means it will have 30 slots.
         '''
         self.slots = self._slots()
-        print(self.slots)
         self.choiceOne, self.choiceTwo = None, None
         self.ButtonOne:None | tk.Button = None
         self.ButtonTwo:None | tk.Button = None
@@ -61,7 +60,6 @@ class MemoryGame:
         para os pares de emoji. (itens do jogo da memória)
         '''
         freeSlots = self._slots(positions=True)
-        print(freeSlots)
         for item in self.emojiList:
             slot1, slot2 = random.sample(freeSlots, k=2)
             freeSlots.pop(freeSlots.index(slot1))
@@ -185,7 +183,6 @@ class MemoryGame:
             self.ButtonOne, self.ButtonTwo = None, None
             if self.discoveredCards == len(self.emojiList):
                 messagebox.showinfo('ACABOU', 'FIM DE JOGO.')
-                print(len(self.PlayerOneCards), len(self.PlayerTwoCards))
                 self.endGame()
         else:
             # messagebox.showinfo('Troca de jogadores', 'Cartas não iguais, troca de jogadores.')

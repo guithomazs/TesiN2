@@ -17,7 +17,9 @@ class Tela:
         self.on_game = 0
         self.timer = 0
         self.table = [['n' for j in range(self.ordem)] for i in range(self.ordem)]
-
+        self.createButtons()
+    
+    def createButtons(self):
         for linha in range(len(self.table)):
             for coluna in range(len(self.table)):
                 btn = tk.Button(self.frameBombs, text='', \
@@ -88,7 +90,6 @@ class Tela:
             self.timer += 1
             self.labelTimer.config(text=self.timer)
             self.labelTimer.after(1000, self.updateClock)
-            
     
     def control(self, pos):
         linha, coluna = pos[0], pos[1]
