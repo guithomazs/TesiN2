@@ -28,8 +28,8 @@ class Checkers:
     def startGame(self):    
         self.player_one_remaining = 12
         self.player_two_remaining = 12
-        self.player_turn = True
-        self.clicked = False
+        self.player_turn = True  #  True pro jogador 1 e False pro jogador 2
+        self.first_click = None
         self.createHeader()
         self.createStartBoard()
 
@@ -118,16 +118,60 @@ class Checkers:
                         fg=self.get_tile_foreground(row, column),
                         text=self.get_tile_text(row, column),
                         width=4, height=2,
-                        font='None 18 bold'
+                        font='None 18 bold',
                         )
-        lbl.bind('<<ButtonPress-1>>', lambda lbl=lbl, row=row, column=column: self.checkMovement(lbl, row, column))
-        lbl.bind('<<ButtonPress-3>>', lambda lbl=lbl, row=row, column=column: self.checkMovement(lbl, row, column))
+        lbl.bind('<ButtonPress-1>', lambda event, lbl=lbl, row=row, column=column: self.checkMovement(lbl, row, column))
+
         lbl.grid(row=row, column=column)
 
-    def checkMovement(lbl, row, column):
-        print(lbl)
+    def checkMovement(self, clicked_label:Label, row, column):
+        # define the element to be moved
+        if not self.first_click:
+            if not (self.game_table[row][column] == self.player_turn):
+                return
+            clicked_label.config(bg='lime')
+            self.first_click = clicked_label
+            return
+        # if it isn't the first click, and is the same label of the first click, reset the click
+        if self.first_click == clicked_label:
+            clicked_label.config(bg='white')
+            self.first_click = None
+            return
+        # if the house it's trying to move it's occupied then it isn't able to move
+        if self.game_table[row][column] is not None:
+            return
         
+        self.first_click_row = self.first_click.grid_info()['row']
+        self.first_click_col = self.first_click.grid_info()['column']
+        adjacent_houses = [
+            [self.first_click_row-1, self.first_click_col-1],
+            [self.first_click_row-1, self.first_click_col+1], 
+            [self.first_click_row+1, self.first_click_col-1],
+            [self.first_click_row+1, self.first_click_col+1]
+        ]
+        if [row, column] not in adjacent_houses:
+            return
+        self.checkNext(row, column)
 
+        self.game_table[self.first_click_row][self.first_click_col] = None
+        self.game_table[row][column] = self.player_turn
+        self.first_click.config(text='')
+        clicked_label.config(text=self.get_tile_text(row, column), 
+                             fg=self.get_tile_foreground(row, column))
+        self.first_click.config(bg='white')
+        self.first_click = None
+        self.player_turn = not self.player_turn
+    
+    def checkNext(self, actual_row, actual_col):
+        diff_row = self.first_click_row - actual_row
+        diff_col = self.first_click_col - actual_col
+        next_row = actual_row - diff_row
+        next_col = actual_col - diff_col
+        if (next_row < 0 or next_row >= len(self.game_table)) or next_col < 0 or next_col >= len(self.game_table):
+            print('out of table')
+            return
+        print(self.game_table[next_row][next_col])
+        
     def get_tile_color(self, row, column):
         return (EVEN_TILES if (is_odd(row) and not is_odd(column)) 
                     or not is_odd(row) and is_odd(column) else ODD_TILES )
