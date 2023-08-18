@@ -137,10 +137,8 @@ class Checkers:
                         font='None 18 bold',
                         )
         lbl.bind('<ButtonPress-1>', lambda event, lbl=lbl, row=row, column=column: self.checkMovement(lbl, row, column))
-
-        self.buttons[row][column] = lbl
-
         lbl.grid(row=row, column=column)
+        self.buttons[row][column] = lbl
 
     def checkMovement(self, clicked_label:Label, row, column):
         # define the element to be moved
@@ -190,15 +188,21 @@ class Checkers:
         if len(self.obrigatory_movements):
             if[row, column] not in self.obrigatory_movements[(first_click_row, first_click_col)]:
                 return
-            print('AHORA FOI CARALHO.', [row, column], [row,column] in self.obrigatory_movements[(first_click_row, first_click_col)])
+            print('AGORA FOI.', [row, column], [row,column] in self.obrigatory_movements[(first_click_row, first_click_col)])
             self.remove_piece(first_click_row, first_click_col, row, column)
         # self.checkNext(first_click_row, first_click_col, row, column)
 
         self.changePiecePosition(first_click_row, first_click_col, row, column, clicked_label)    
 
+        self.obrigatory_movements = {}
         self.mapPiece(row, column)
-
-        self.changePlayerTurn()    
+        if not len(self.obrigatory_movements):
+            self.can_change_first_click = True
+            self.changePlayerTurn()  
+        else:
+            self.can_change_first_click = False
+            self.first_click = clicked_label
+            clicked_label.config(bg='lime')
 
     def remove_piece(self, first_row, first_column, last_row, last_column):
         diff_row = (first_row - last_row) // 2
@@ -233,12 +237,14 @@ class Checkers:
         self.first_click = None
     
     def mapPiece(self, piece_row, piece_column):
-        adjacent_houses = [
-            [piece_row-1, piece_column-1],
-            [piece_row-1, piece_column+1], 
-            [piece_row+1, piece_column-1],
-            [piece_row+1, piece_column+1]
-        ]
+        adjacent_houses = []
+        if piece_row-1 >= 0 and piece_column-1 >= 0: adjacent_houses.append([piece_row-1, piece_column-1])
+        if piece_row-1 >= 0 and piece_column+1 < 8: adjacent_houses.append([piece_row-1, piece_column+1])
+        if piece_row+1 >= 0 and piece_column-1 >= 0: adjacent_houses.append([piece_row+1, piece_column-1])
+        if piece_row+1 >= 0 and piece_column+1 < 8: adjacent_houses.append([piece_row+1, piece_column+1])
+        for adjacent in adjacent_houses:
+            if self.game_table[adjacent[0]][adjacent[1]] == (not self.player_turn):
+                self.checkNext(piece_row, piece_column, adjacent[0], adjacent[1])
 
     def changePlayerTurn(self):
         self.player_turn = not self.player_turn
@@ -297,6 +303,7 @@ class Checkers:
     
     def get_tile_text(self, row, column):
         return ('⛃' if self.game_table[row][column] is not None else '')
+    
 root = Tk()
 app = Checkers(root)
 root.mainloop()
