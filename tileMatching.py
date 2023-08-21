@@ -6,7 +6,7 @@ import time
 
 GAME_ROWS = 5
 GAME_COLUMNS = 6
-PLAYER_ONE_COLOR = 'green'
+PLAYER_ONE_COLOR = 'lime'
 PLAYER_TWO_COLOR = 'RED'
 def showMat(mat):
     for i in range(GAME_ROWS):
@@ -42,7 +42,6 @@ class MemoryGame:
         columns what means it will have 30 slots.
         '''
         self.slots = self._slots()
-        print(self.slots)
         self.choiceOne, self.choiceTwo = None, None
         self.ButtonOne:None | tk.Button = None
         self.ButtonTwo:None | tk.Button = None
@@ -61,15 +60,13 @@ class MemoryGame:
         para os pares de emoji. (itens do jogo da memória)
         '''
         freeSlots = self._slots(positions=True)
-        print(freeSlots)
         for item in self.emojiList:
             slot1, slot2 = random.sample(freeSlots, k=2)
             freeSlots.pop(freeSlots.index(slot1))
             freeSlots.pop(freeSlots.index(slot2))
             self.slots[slot1[0]][slot1[1]] = item
             self.slots[slot2[0]][slot2[1]] = item
-
-        showMat(self.slots)
+        # showMat(self.slots)
 
     def createHeader(self):
         self.frameHeader = tk.Frame(self.root)

@@ -2,7 +2,7 @@ import random
 import tkinter as tk
 
 class Tela:
-    def __init__(self, master: tk.Tk, n_bombs=99, ordem=20):
+    def __init__(self, master: tk.Tk, n_bombs=15, ordem=20):
         self.janela = master
         self.janela.title('É o Minas é.')
         self.num_bombas = n_bombs
