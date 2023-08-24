@@ -6,20 +6,22 @@ ODD_TILES = 'brown'   # blocos ímpares
 PLAYER_ONE_COLOR = 'red'
 PLAYER_TWO_COLOR = 'black'
 
+
 class PlayerOne(Enum):
     DEFAULT_PIECE = 'PlayerOne'
     SUPER_PIECE = 'SuperPlayerOne'
     
+
 class PlayerTwo(Enum):
     DEFAULT_PIECE = 'PlayerTwo'
     SUPER_PIECE = 'SuperPlayerTwo'
+
 
 def showMat(mat):
     for i in range(8):
         for j in range(8):
             print(mat[i][j], ' ', end='')
         print()
-
 
 def is_odd(number):
     return True if number % 2 != 0 else False   
@@ -45,7 +47,7 @@ class Checkers:
         self.on_deletion = False
         self.can_change_first_click = True
         self.finished = False
-        self.buttons = [[None for i in range(8)] for j in range(8)]
+        self.tiles_labels = [[None for i in range(8)] for j in range(8)]
         self.createHeader()
         self.createStartBoard()
 
@@ -148,31 +150,51 @@ class Checkers:
                         width=4, height=2,
                         font='None 24 bold',
                         )
-        lbl.bind('<ButtonPress-1>', lambda event, lbl=lbl, row=row, column=column: self.checkMovement(lbl, row, column))
+        lbl.bind('<ButtonPress-1>', lambda event, lbl=lbl, row=row, column=column: self.controlMovement(lbl, row, column))
         lbl.grid(row=row, column=column)
-        self.buttons[row][column] = lbl
+        self.tiles_labels[row][column] = lbl
 
-    def checkMovement(self, clicked_label:Label, row, column):
-        # this variable checks if the first movement of a piece or if it's a sequence of captures
-        self.on_deletion = False
-        
-        # define the element to be moved
-        if not self.first_click:
-            # if there is any capture to be done, only be able to click the piece that can capture something
-            if len(self.obrigatory_movements) and (row, column) not in self.obrigatory_movements.keys():
-                return
-            player_pieces = PlayerOne if self.player_turn else PlayerTwo
-            if not (
-                self.game_table[row][column] == player_pieces.DEFAULT_PIECE
-                or
-                self.game_table[row][column] == player_pieces.SUPER_PIECE
-                ):
-                return
-            clicked_label.config(bg='lime')
-            self.first_click = clicked_label
+    def validateFirstClick(self, row, column, clicked_label: Label):
+    # if there is any capture to be done, only be able to select the piece that can capture something
+        if len(self.obrigatory_movements) and (row, column) not in self.obrigatory_movements.keys():
             return
         
-        # if it isn't the first click, and is the same label of the first click, reset the click
+        player_pieces = PlayerOne if self.player_turn else PlayerTwo
+        # if the clicked tile dont have a piece of the current player, then return
+        if self.game_table[row][column] not in [
+                    player_pieces.DEFAULT_PIECE, 
+                    player_pieces.SUPER_PIECE
+                ]:
+            return
+        clicked_label.config(bg='lime')
+        self.first_click = clicked_label
+        return    
+
+    def getAdjacentTiles(self, piece_row, piece_column, is_for_capture=False):
+        upper_movements = [
+            [piece_row-1, piece_column-1],
+            [piece_row-1, piece_column+1], 
+        ]
+
+        lower_movements = [
+            [piece_row+1, piece_column-1],
+            [piece_row+1, piece_column+1]
+        ]
+
+        if self.game_table[piece_row][piece_column] in [
+                    PlayerOne.DEFAULT_PIECE, PlayerTwo.DEFAULT_PIECE
+                ] and not is_for_capture:
+            return upper_movements if self.player_turn else lower_movements
+        return upper_movements + lower_movements
+
+    def controlMovement(self, clicked_label:Label, row, column):
+        # define the element to be moved, if there's no piece selected yet, 
+        # then verify if it's a valid pieceto be chosen.
+        if not self.first_click:
+            self.validateFirstClick(row, column, clicked_label)
+            return
+        
+        # if it isn't the first click, and is the same label of the first click, undo the click
         if self.first_click == clicked_label:
             if not self.can_change_first_click:
                 return
@@ -203,8 +225,6 @@ class Checkers:
             self.removePiece(first_click_row, first_click_col, row, column)
             self.obrigatory_movements = {}
             self.changePiecePosition(first_click_row, first_click_col, row, column, clicked_label)    
-            self.mapPiece(row, column)
-        # self.checkNext(first_click_row, first_click_col, row, column)
         else:
             self.changePiecePosition(first_click_row, first_click_col, row, column, clicked_label)    
 
@@ -216,32 +236,13 @@ class Checkers:
             self.first_click = clicked_label
             clicked_label.config(bg='lime')
 
-    def getAdjacentTiles(self, piece_row, piece_column, is_for_capture=False):
-        if self.game_table[piece_row][piece_column] in [PlayerOne.DEFAULT_PIECE, PlayerTwo.DEFAULT_PIECE] and not is_for_capture:
-            # in default pieces, player 2 can only move 
-            # downwards and player 1 can only move upwards 
-            # if it's not for capture an enemy.
-            return [
-                    [piece_row-1, piece_column-1],
-                    [piece_row-1, piece_column+1], 
-                ] if self.player_turn else [
-                    [piece_row+1, piece_column-1],
-                    [piece_row+1, piece_column+1]
-                    ]
-        return [
-            [piece_row-1, piece_column-1],
-            [piece_row-1, piece_column+1], 
-            [piece_row+1, piece_column-1],
-            [piece_row+1, piece_column+1]
-        ]
-
     def removePiece(self, first_row, first_column, last_row, last_column):
         self.on_deletion = True
         diff_row = (first_row - last_row) // 2
         diff_column = (first_column - last_column) // 2
         wanted_row = first_row -  diff_row
         wanted_column = first_column - diff_column
-        self.buttons[wanted_row][wanted_column].config(text='')
+        self.tiles_labels[wanted_row][wanted_column].config(text='')
         self.game_table[wanted_row][wanted_column] = None
 
         if not self.player_turn:
@@ -256,15 +257,19 @@ class Checkers:
         if self.player_one_remaining == 0 or self.player_two_remaining == 0:
             self.finished = True
             self.endGame()
+        
+    def canTurnSuperPiece(self, row, column, first_row, first_col):
+        self.game_table[row][column] = PlayerOne.SUPER_PIECE if (
+                self.player_turn and row == 0) else PlayerTwo.SUPER_PIECE if(
+                    not self.player_turn and row == 7
+                ) else self.game_table[first_row][first_col]
+        return
     
     def changePiecePosition(self, first_row, first_col, actual_row, actual_col, clicked_label):
-        # se é o jogador 1 e ele chegou na linha mais de cima, vira super peça ou
-        # se é o jogador 2 e ele chegou na linha mais de baixo vira super peça
-        # caso contrário, apenas move a peça sendo ela do player 1 ou do player 2.
-        self.game_table[actual_row][actual_col] = PlayerOne.SUPER_PIECE if (
-            self.player_turn and actual_row == 0) else PlayerTwo.SUPER_PIECE if(
-                not self.player_turn and actual_row == 7
-            ) else self.game_table[first_row][first_col] 
+        # if it's player 1 and he got into upper row, this piece turns into super_piece else
+        # if it's player 2 and he got into lower row, this piece turns into super_piece else
+        # it just moves the piece
+        self.getNewTileText(actual_row, actual_col, first_row, first_col)
         self.game_table[first_row][first_col] = None
         
         if self.player_turn:
@@ -279,23 +284,33 @@ class Checkers:
                              fg=self.getTileForeground(actual_row, actual_col))
         self.first_click.config(bg='white')
         self.first_click = None
+
+    def getNewTileText(self, new_row, new_column, first_row, first_col):
+        # if not len(self.obrigatory_movements):
+        #     self.game_table[new_row][new_column] = PlayerOne.SUPER_PIECE if (
+        #         self.player_turn and new_row == 0) else PlayerTwo.SUPER_PIECE if(
+        #             not self.player_turn and new_row == 7
+        #         ) else self.game_table[first_row][first_col] 
+        #     return
+        self.game_table[new_row][new_column] = self.game_table[first_row][first_col] 
     
-    def mapPiece(self, piece_row, piece_column):
+    def mapPiece(self, piece_row, piece_column, just_checking):
         adjacent_capture_tiles = self.getAdjacentTiles(piece_row, piece_column, is_for_capture=True)
         adjacent_movement_tiles = self.getAdjacentTiles(piece_row, piece_column)
 
         other_player = PlayerTwo if self.player_turn else PlayerOne
-        for adjacent in adjacent_capture_tiles:
-            if self.isValidTile(adjacent):
-                if self.game_table[adjacent[0]][adjacent[1]] in [
+        for adjacent_tile in adjacent_capture_tiles:
+            adjacent_tile_row, adjacent_tile_column = adjacent_tile
+            if self.isValidTile(adjacent_tile):
+                if self.game_table[adjacent_tile_row][adjacent_tile_column] in [
                                                                     other_player.DEFAULT_PIECE, 
                                                                     other_player.SUPER_PIECE    
                                                                 ]:
-                    if self.checkNext(piece_row, piece_column, adjacent[0], adjacent[1]):
+                    if self.checkNext(piece_row, piece_column, adjacent_tile_row, adjacent_tile_column):
                         self.has_valid_tiles = True
-                elif adjacent in adjacent_movement_tiles and self.isEmptyTile(adjacent[0], adjacent[1]):
-                    print('estou em', piece_row, piece_column, 'meus adjacentes são', adjacent[0], adjacent[1])
+                elif adjacent_tile in adjacent_movement_tiles and self.isEmptyTile(adjacent_tile_row, adjacent_tile_column):
                     self.has_valid_tiles = True
+        return self.has_valid_tiles
 
     def changePlayerTurn(self):
         self.player_turn = not self.player_turn
@@ -309,7 +324,7 @@ class Checkers:
     def mapPiecesObrigatory(self, pieces_list):
         for piece in pieces_list:
             piece_row, piece_column = piece
-            self.mapPiece(piece_row, piece_column)
+            self.mapPiece(piece_row, piece_column, just_checking=False)
             
 
     def isValidTile(self, casa):

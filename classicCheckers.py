@@ -20,10 +20,8 @@ def showMat(mat):
             print(mat[i][j], ' ', end='')
         print()
 
-
 def is_odd(number):
     return True if number % 2 != 0 else False   
-
 
 class Checkers:
     def __init__(self, master=Tk) -> None:
@@ -32,6 +30,8 @@ class Checkers:
         self.root.title('Checkers in tkinter')
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
+        self.title_font = 'Helvetica 16 bold'
+        self.sub_font = 'Helvetica 12'
         self.startGame()
 
     def startGame(self):    
@@ -42,62 +42,44 @@ class Checkers:
         self.player_one_pieces = []
         self.player_two_pieces = []
         self.obrigatory_movements = {}
-        self.on_deletion = False
         self.can_change_first_click = True
+        self.finished = False
         self.buttons = [[None for i in range(8)] for j in range(8)]
         self.createHeader()
         self.createStartBoard()
 
+    def _create_label(self, frame, text, **kwargs):
+        label = Label(frame, text=text, **kwargs)
+        label.grid()
+        return label
+    
+    def _create_title_label(self, frame, text, **kwargs):
+        return self._create_label(frame, text, font=self.title_font, **kwargs)
+    
+    def _create_subtitle_label(self, frame, text, **kwargs):
+        return self._create_label(frame, text, font=self.sub_font, **kwargs)
+
+    def _create_frame_player(self, name, available_pieces, column, **kwargs):
+        frame_player = Frame(self.frame_header)
+        self._create_title_label(frame_player, name)
+        label_player = self._create_subtitle_label(frame_player, f'Peças Restantes: {available_pieces}')
+        label_player.grid()
+
+        frame_attrs = {"row": 0, "column": column, "sticky": NSEW}
+        frame_attrs.update(kwargs)
+        frame_player.grid(**frame_attrs)
+        return label_player
+
     def createHeader(self):
         self.frame_header = Frame(self.root)
-        titleFont = 'Helvetica 16 bold'
-        subFont = 'Helvetica 12'
 
-        framePlayerOne = Frame(self.frame_header)
-        Label(framePlayerOne, 
-                 text='Jogador 1', 
-                 font=titleFont, 
-                #  fg=PLAYER_ONE_COLOR
-        ).grid()
-        self.label_player_one_cards = Label(
-            framePlayerOne, 
-            text=f'Peças Restantes: {self.player_one_remaining}', 
-            font=subFont,
-            # fg=PLAYER_ONE_COLOR
-        )
-        self.label_player_one_cards.grid()
+        self.label_player_one_cards = self._create_frame_player("Jogador 1", self.player_one_remaining, 0, columnspan=2)
+        self.label_player_two_cards = self._create_frame_player("Jogador 2", self.player_two_remaining, 4)
         
         frameTurn = Frame(self.frame_header)
-        Label(frameTurn, 
-                 text='Vez do jogador:', 
-                 font=titleFont
-        ).grid()
-        self.LabelTurn = Label(
-            frameTurn, 
-            text='1', 
-            # text=1 if self.player_turn else 2, 
-            font=subFont
-        )
-        self.LabelTurn.grid()
-
-        framePlayerTwo = Frame(self.frame_header)
-        Label(
-            framePlayerTwo, 
-            text='Jogador 2', 
-            font=titleFont, 
-            # fg=PLAYER_TWO_COLOR
-        ).grid()
-        self.label_player_two_cards = Label(
-            framePlayerTwo, 
-            text=f'Peças restantes: {self.player_two_remaining}', 
-            font=subFont,
-            # fg=PLAYER_TWO_COLOR
-        )
-        self.label_player_two_cards.grid()
-
-        framePlayerOne.grid(row=0, column=0, rowspan=2, columnspan=2, sticky=NSEW)
+        self._create_title_label(frameTurn, 'Vez do jogador:')
+        self.LabelTurn = self._create_subtitle_label(frameTurn, '1')
         frameTurn.grid(row=0, column=2, rowspan=2, sticky=NSEW)
-        framePlayerTwo.grid(row=0, column=4, rowspan=2, sticky=NSEW)
         self.frame_header.grid_columnconfigure(1, weight=1)
         self.frame_header.grid_columnconfigure(3, weight=1)
     
@@ -152,9 +134,6 @@ class Checkers:
         self.buttons[row][column] = lbl
 
     def checkMovement(self, clicked_label:Label, row, column):
-        # this variable checks if the first movement of a piece or if it's a sequence of captures
-        self.on_deletion = False
-        
         # define the element to be moved
         if not self.first_click:
             # if there is any capture to be done, only be able to click the piece that can capture something
@@ -201,14 +180,16 @@ class Checkers:
                 return
             self.removePiece(first_click_row, first_click_col, row, column)
             self.obrigatory_movements = {}
-            self.changePiecePosition(first_click_row, first_click_col, row, column, clicked_label)    
-            self.mapPiece(row, column)
+            self.changePiecePosition(first_click_row, first_click_col, row, column, clicked_label) 
+            if (self.player_turn and not row == 0) or (not self.player_turn and not row == 7):
+                self.mapPiece(row, column)
         # self.checkNext(first_click_row, first_click_col, row, column)
         else:
             self.changePiecePosition(first_click_row, first_click_col, row, column, clicked_label)    
 
         if not len(self.obrigatory_movements):
             self.can_change_first_click = True
+            self.grant_piece(row, column)
             self.changePlayerTurn()  
         else:
             self.can_change_first_click = False
@@ -216,26 +197,27 @@ class Checkers:
             clicked_label.config(bg='lime')
 
     def getAdjacentTiles(self, piece_row, piece_column):
-        if self.game_table[piece_row][piece_column] in [PlayerOne.DEFAULT_PIECE, PlayerTwo.DEFAULT_PIECE]:
-            # in default pieces, player 2 can only move 
-            # downwards and player 1 can only move upwards 
-            # if it's not for capture an enemy.
-            return [
-                    [piece_row-1, piece_column-1],
-                    [piece_row-1, piece_column+1], 
-                ] if self.player_turn else [
-                    [piece_row+1, piece_column-1],
-                    [piece_row+1, piece_column+1]
-                    ]
-        return [
+        upper_movements = [
             [piece_row-1, piece_column-1],
             [piece_row-1, piece_column+1], 
+        ]
+
+        lower_movements = [
             [piece_row+1, piece_column-1],
             [piece_row+1, piece_column+1]
         ]
 
+        if self.game_table[piece_row][piece_column] in [
+                    PlayerOne.DEFAULT_PIECE, PlayerTwo.DEFAULT_PIECE
+                ]:
+            # in default pieces, player 2 can only move 
+            # downwards and player 1 can only move upwards 
+            # if it's not for capture an enemy.            
+            return upper_movements if self.player_turn else lower_movements
+        return upper_movements + lower_movements
+    
+
     def removePiece(self, first_row, first_column, last_row, last_column):
-        self.on_deletion = True
         diff_row = (first_row - last_row) // 2
         diff_column = (first_column - last_column) // 2
         wanted_row = first_row -  diff_row
@@ -254,16 +236,23 @@ class Checkers:
             self.label_player_two_cards.config(text=f'Peças Restantes: {self.player_two_remaining}')
         
         if self.player_one_remaining == 0 or self.player_two_remaining == 0:
+            self.finished = True
             self.endGame()
-    
+
+    def grant_piece(self, row, col):
+        if self.player_turn and row == 0:
+            self.game_table[row][col] = PlayerOne.SUPER_PIECE
+            return True
+        elif (not self.player_turn) and row == 7:
+            self.game_table[row][col] = PlayerTwo.SUPER_PIECE
+            return True
+        return False
+
     def changePiecePosition(self, first_row, first_col, actual_row, actual_col, clicked_label):
-        # se é o jogador 1 e ele chegou na linha mais de cima, vira super peça ou
-        # se é o jogador 2 e ele chegou na linha mais de baixo vira super peça
-        # caso contrário, apenas move a peça sendo ela do player 1 ou do player 2.
-        self.game_table[actual_row][actual_col] = PlayerOne.SUPER_PIECE if (
-            self.player_turn and actual_row == 0) else PlayerTwo.SUPER_PIECE if(
-                not self.player_turn and actual_row == 7
-            ) else self.game_table[first_row][first_col] 
+        if not self.grant_piece(actual_row, actual_col):
+            self.game_table[actual_row][actual_col] = self.game_table[first_row][first_col]
+        # self.game_table[actual_row][actual_col] = self.game_table[first_row][first_col]
+
         self.game_table[first_row][first_col] = None
         
         if self.player_turn:
@@ -289,10 +278,8 @@ class Checkers:
                                                                     other_player.SUPER_PIECE    
                                                                 ]:
                     if self.checkNext(piece_row, piece_column, adjacent[0], adjacent[1]):
-                        print('ponto 1 --- estou em', piece_row, piece_row, 'meus adjacentes são', adjacent[0], adjacent[1])
                         self.has_valid_tiles = True
                 elif self.isEmptyTile(adjacent[0], adjacent[1]):
-                    print('estou em', piece_row, piece_column, 'meus adjacentes são', adjacent[0], adjacent[1])
                     self.has_valid_tiles = True
 
     def changePlayerTurn(self):
@@ -301,7 +288,7 @@ class Checkers:
         self.LabelTurn.config(text='1' if self.player_turn else '2')
         self.has_valid_tiles = False
         self.mapPiecesObrigatory(self.player_one_pieces if self.player_turn else self.player_two_pieces) 
-        if not self.has_valid_tiles:
+        if not self.has_valid_tiles and not self.finished:
             self.noValidTiles()
 
     def mapPiecesObrigatory(self, pieces_list):
@@ -327,7 +314,7 @@ class Checkers:
         next_col = next_col - diff_col
 
         # this line verify if the next element is not out of the table
-        if (next_row < 0 or next_row >= len(self.game_table)) or next_col < 0 or next_col >= len(self.game_table):
+        if next_row < 0 or next_row >= len(self.game_table) or next_col < 0 or next_col >= len(self.game_table):
             return False
         
         # this line verify if the next house of the direction is empty or fullfiled
@@ -386,10 +373,13 @@ class Checkers:
         Label(topLevelWinner,
                     text=f'Vitória do jogador {1 if not self.player_turn else 2}', 
                     font='Helvetica 14 bold').grid(columnspan=3)
+        Label(topLevelWinner,
+                    text=f'Jogador {2 if not self.player_turn else 1} morreu no porco.', 
+                    font='Helvetica 14 bold').grid(columnspan=3)
         Button(topLevelWinner, text='Jogar Novamente', font='Helvetica 12 bold',
                     command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=NSEW)
         Button(topLevelWinner, text='Sair', font='Helvetica 12 bold',
-                    command=self.close).grid(row=1, column=1, sticky=NSEW, columnspan=2)
+                    command=self.close).grid(row=2, column=1, sticky=NSEW, columnspan=2)
         
     def close(self):
         self.root.destroy()
