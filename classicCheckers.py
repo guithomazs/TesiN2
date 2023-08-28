@@ -23,7 +23,7 @@ def showMat(mat):
 def is_odd(number):
     return True if number % 2 != 0 else False   
 
-class Checkers:
+class ClassicCheckers:
     def __init__(self, master=Tk) -> None:
         self.root = master
         self.root.resizable(False, False)
@@ -289,7 +289,7 @@ class Checkers:
         self.has_valid_tiles = False
         self.mapPiecesObrigatory(self.player_one_pieces if self.player_turn else self.player_two_pieces) 
         if not self.has_valid_tiles and not self.finished:
-            self.noValidTiles()
+            self.endGame()
 
     def mapPiecesObrigatory(self, pieces_list):
         for piece in pieces_list:
@@ -351,30 +351,24 @@ class Checkers:
             )
     
     def endGame(self):
-        topLevelWinner = Toplevel(self.root)
-        topLevelWinner.grab_set()
-        topLevelWinner.resizable(False, False)
-        topLevelWinner.title('Fim de jogo!!!')
-        topLevelWinner.protocol("WM_DELETE_WINDOW", self.close)
-        Label(topLevelWinner,
-                    text=f'Vitória do jogador {1 if self.player_one_remaining > self.player_two_remaining else 2}', 
-                    font='Helvetica 14 bold').grid(columnspan=3)
-        Button(topLevelWinner, text='Jogar Novamente', font='Helvetica 12 bold',
-                    command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=NSEW)
-        Button(topLevelWinner, text='Sair', font='Helvetica 12 bold',
-                    command=self.close).grid(row=1, column=1, sticky=NSEW, columnspan=2)
-    
-    def noValidTiles(self):
+        if self.player_one_remaining > 0 and self.player_two_remaining > 0:
+            textVictory = f'Vitória do jogador {1 if not self.player_turn else 2}'
+            textEnd =  f'Jogador {2 if not self.player_turn else 1} morreu no porco.'
+            title = 'Morte no porco!!!'
+        else:
+            textVictory = f'Vitória do jogador {1 if self.player_turn else 2}'
+            textEnd =  f'Jogador {1 if not self.player_turn else 2} ficou sem peças.'
+            title = 'Fim de jogo!!!'
         topLevelWinner = Toplevel(self.root)
         topLevelWinner.grab_set()
         topLevelWinner.resizable(False, False)
         topLevelWinner.protocol("WM_DELETE_WINDOW", self.close)
-        topLevelWinner.title('Morte no porco!!!')
+        topLevelWinner.title(title)
         Label(topLevelWinner,
-                    text=f'Vitória do jogador {1 if not self.player_turn else 2}', 
+                    text=textVictory, 
                     font='Helvetica 14 bold').grid(columnspan=3)
         Label(topLevelWinner,
-                    text=f'Jogador {2 if not self.player_turn else 1} morreu no porco.', 
+                    text=textEnd, 
                     font='Helvetica 14 bold').grid(columnspan=3)
         Button(topLevelWinner, text='Jogar Novamente', font='Helvetica 12 bold',
                     command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=NSEW)
@@ -390,6 +384,7 @@ class Checkers:
         self.frame_slots.destroy()
         self.startGame()
     
-root = Tk()
-app = Checkers(root)
-root.mainloop()
+if __name__ == '__main__':
+    root = Tk()
+    app = ClassicCheckers(root)
+    root.mainloop()
