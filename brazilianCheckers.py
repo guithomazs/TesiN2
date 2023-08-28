@@ -177,49 +177,6 @@ class BrazilianCheckers:
         if not is_for_capture:
             return upper_movements if self.player_turn else lower_movements
         return upper_movements + lower_movements
-
-    def getSuperPieceMovements(self, piece_row, piece_column):
-        movement_options = []
-        adjacent_tiles = [
-            [piece_row-1, piece_column-1],
-            [piece_row-1, piece_column+1], 
-            [piece_row+1, piece_column-1],
-            [piece_row+1, piece_column+1]
-        ]
-        other_player = PlayerTwo if self.player_turn else PlayerOne
-        actual_player = PlayerOne if self.player_turn else PlayerTwo
-        for direction in adjacent_tiles:
-            self.capture = False
-            actual_tile = direction
-            direction_row = piece_row - direction[0]
-            direction_col = piece_column - direction[1]
-
-            while self.isValidTile(actual_tile[0], actual_tile[1]):
-                intern_tile = actual_tile
-                if self.game_table[actual_tile[0]][actual_tile[1]] in [
-                    actual_player.DEFAULT_PIECE, actual_player.SUPER_PIECE
-                ]:
-                    break
-                if self.game_table[actual_tile[0]][actual_tile[1]] in [
-                    other_player.DEFAULT_PIECE, other_player.SUPER_PIECE
-                ]:
-                    intern_tile = self.getNextPosition(actual_tile[0], actual_tile[1], direction_row, direction_col)
-                    while self.isValidTile(intern_tile[0], intern_tile[1]):
-                        if self.game_table[intern_tile[0]][intern_tile[1]] is not None:
-                            self.capture = False
-                            break
-                        if not self.isEmptyTile(intern_tile[0], intern_tile[1]):
-                            break
-                        self.addObrigatoryMovementOption(piece_row, piece_column, intern_tile[0], intern_tile[1])
-                        intern_tile = self.getNextPosition(intern_tile[0], intern_tile[1], direction_row, direction_col)
-                if not self.isValidTile(intern_tile[0], intern_tile[1]):
-                    break
-                if self.game_table[intern_tile[0]][intern_tile[1]] is not None:
-                    break
-                self.has_valid_tiles = True
-                movement_options.append(actual_tile)
-                actual_tile = self.getNextPosition(actual_tile[0], actual_tile[1], direction_row, direction_col)
-        return movement_options
     
     def getNextPosition(self, actual_row, actual_column, direction_row, direction_column):
         next_row = actual_row - direction_row
