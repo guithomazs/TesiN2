@@ -1,25 +1,32 @@
 import random
 import tkinter as tk
 
-class Tela:
-    def __init__(self, master: tk.Tk, n_bombs=15, ordem=20):
-        self.janela = master
-        self.janela.title('É o Minas é.')
+class Minas:
+    def __init__(self, master: tk.Tk, n_bombs=99, ordem=20, controller=None):
+        self.root = master
+        self.root.title('É o Minas é.')
         self.num_bombas = n_bombs
         self.ordem=ordem
-        self.start()
+        self.controller = controller
+        if controller != None:
+            self.changeCloseButtonFunction()
+        self.startGame()
+
+    def changeCloseButtonFunction(self):
+        self.root.protocol('WM_DELETE_WINDOW', self.goBackFunction)
+
+    def goBackFunction(self):
+        self.controller.goingBack(self.root)
     
-    def start(self):
-        self.labelTimer = tk.Label(self.janela, text='0', font='Helvetica 18 bold')
-        self.labelTimer.grid(row=0,columnspan=self.ordem, sticky=tk.NSEW)
-        self.frameBombs = tk.Frame(self.janela)
+    def startGame(self):
+        self.labelTimer = tk.Label(self.root, text='0', font='Helvetica 18 bold')
+        self.labelTimer.grid(row=0,columnspan=self.ordem)
+        self.frameBombs = tk.Frame(self.root)
         self.frameBombs.grid(row=1, columnspan=self.ordem)
         self.on_game = 0
         self.timer = 0
         self.table = [['n' for j in range(self.ordem)] for i in range(self.ordem)]
-        self.createButtons()
-    
-    def createButtons(self):
+
         for linha in range(len(self.table)):
             for coluna in range(len(self.table)):
                 btn = tk.Button(self.frameBombs, text='', \
@@ -90,6 +97,7 @@ class Tela:
             self.timer += 1
             self.labelTimer.config(text=self.timer)
             self.labelTimer.after(1000, self.updateClock)
+            
     
     def control(self, pos):
         linha, coluna = pos[0], pos[1]
@@ -183,22 +191,19 @@ class Tela:
         self.restartTopLevel.grab_set()
         self.restartTopLevel.resizable(False, False)
         self.restartTopLevel.protocol("WM_DELETE_WINDOW", self.disable_event)
-        # self.restartTopLevel.bind("<Destroy>", self.reopen)
         fontBtns = 'Helvetica 12 bold'
-        restartButton = tk.Button(self.restartTopLevel, text='Jogar novamente', font=fontBtns, command=self.RestartGame)
-        restartButton.grid()
-        quitButton = tk.Button(self.restartTopLevel, text='Sair', font=fontBtns, command=self.sair)
-        quitButton.grid(row=0, column=1)
-    
-    def reopen(self, e):
-        self.janela.deiconify()
+        restartButton = tk.Button(self.restartTopLevel, text='Jogar novamente', font=fontBtns, command=self.RestartGame).grid()
+        restartButton = tk.Button(self.restartTopLevel, text='Sair', font=fontBtns, command=self.close).grid(row=0, column=1)
 
     def RestartGame(self):
         self.restartTopLevel.destroy()
-        self.start()
+        self.startGame()
 
-    def sair(self):
-        self.janela.destroy()
+    def close(self):
+        if self.controller != None:
+            self.controller.goingBack(self.root)
+        else:
+            self.root.destroy()
         
     def gera_bombas(self, num_bombs, protected_area=None):
         opcoes = []
@@ -273,5 +278,5 @@ class Tela:
 
 if __name__ == '__main__':
     app = tk.Tk()
-    master = Tela(app)
+    master = Minas(app)
     app.mainloop()

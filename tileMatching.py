@@ -1,8 +1,7 @@
-import tkinter as tk
+from tkinter import *
 from tkinter import messagebox
 import random
 import time
-
 
 GAME_ROWS = 5
 GAME_COLUMNS = 6
@@ -14,12 +13,11 @@ def showMat(mat):
             print(mat[i][j], ' ', end='')
         print()
 
-
-class MemoryGame:
-    def __init__(self, master:tk.Tk):
+class TileMatching:
+    def __init__(self, master:Tk, controller=None):
         self.root = master
         self.root.resizable(False, False) 
-        self.root.title('Memory Game in tkinter')
+        self.root.title('Tile Matching in tkinter')
         self.emojiList = [
             '💀', '👽', '👾', '🤖', '🎃', 
             '😺', '🎱', '🤑', '🤠', '😈', 
@@ -27,7 +25,16 @@ class MemoryGame:
         ]
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
+        self.controller = controller
+        if controller != None:
+            self.changeCloseButtonFunction()
         self.startGame()
+
+    def changeCloseButtonFunction(self):
+        self.root.protocol('WM_DELETE_WINDOW', self.goBackFunction)
+
+    def goBackFunction(self):
+        self.controller.goingBack(self.root)
     
     def _slots(self, positions=False):
         if positions:
@@ -43,8 +50,8 @@ class MemoryGame:
         '''
         self.slots = self._slots()
         self.choiceOne, self.choiceTwo = None, None
-        self.ButtonOne:None | tk.Button = None
-        self.ButtonTwo:None | tk.Button = None
+        self.ButtonOne:None | Button = None
+        self.ButtonTwo:None | Button = None
         self.PlayerTurn = True # True para jogador 1 ou False para jogador 2, definindo o jogador da vez
         self.PlayerOneCards = []
         self.PlayerTwoCards = []
@@ -66,20 +73,21 @@ class MemoryGame:
             freeSlots.pop(freeSlots.index(slot2))
             self.slots[slot1[0]][slot1[1]] = item
             self.slots[slot2[0]][slot2[1]] = item
+
         # showMat(self.slots)
 
     def createHeader(self):
-        self.frameHeader = tk.Frame(self.root)
+        self.frameHeader = Frame(self.root)
         titleFont = 'Helvetica 18 bold'
         subFont = 'Helvetica 14'
 
-        framePlayerOne = tk.Frame(self.frameHeader)
-        tk.Label(framePlayerOne, 
+        framePlayerOne = Frame(self.frameHeader)
+        Label(framePlayerOne, 
                  text='Jogador 1', 
                  font=titleFont, 
                  fg=PLAYER_ONE_COLOR
         ).grid()
-        self.LabelPlayerOneCards = tk.Label(
+        self.LabelPlayerOneCards = Label(
             framePlayerOne, 
             text=f'Cartas: {len(self.PlayerOneCards)}', 
             font=subFont,
@@ -87,26 +95,26 @@ class MemoryGame:
         )
         self.LabelPlayerOneCards.grid()
         
-        frameTurn = tk.Frame(self.frameHeader)
-        tk.Label(frameTurn, 
+        frameTurn = Frame(self.frameHeader)
+        Label(frameTurn, 
                  text='Vez do jogador:', 
                  font=titleFont
         ).grid()
-        self.LabelTurn = tk.Label(
+        self.LabelTurn = Label(
             frameTurn, 
             text=1 if self.PlayerTurn else 2, 
             font=subFont
         )
         self.LabelTurn.grid()
 
-        framePlayerTwo = tk.Frame(self.frameHeader)
-        tk.Label(
+        framePlayerTwo = Frame(self.frameHeader)
+        Label(
             framePlayerTwo, 
             text='Jogador 2', 
             font=titleFont, 
             fg=PLAYER_TWO_COLOR
         ).grid()
-        self.LabelPlayerTwoCards = tk.Label(
+        self.LabelPlayerTwoCards = Label(
             framePlayerTwo, 
             text=f'Cartas: {len(self.PlayerTwoCards)}', 
             font=subFont,
@@ -114,22 +122,22 @@ class MemoryGame:
         )
         self.LabelPlayerTwoCards.grid()
 
-        framePlayerOne.grid(row=0, column=0, rowspan=2, columnspan=2, sticky=tk.NSEW)
-        frameTurn.grid(row=0, column=2, rowspan=2, sticky=tk.NSEW)
-        framePlayerTwo.grid(row=0, column=4, rowspan=2, sticky=tk.NSEW)
+        framePlayerOne.grid(row=0, column=0, rowspan=2, columnspan=2, sticky=NSEW)
+        frameTurn.grid(row=0, column=2, rowspan=2, sticky=NSEW)
+        framePlayerTwo.grid(row=0, column=4, rowspan=2, sticky=NSEW)
         self.frameHeader.grid_columnconfigure(1, weight=1)
         self.frameHeader.grid_columnconfigure(3, weight=1)
     
-        self.frameHeader.grid(sticky=tk.NSEW)
+        self.frameHeader.grid(sticky=NSEW)
 
     def createButtons(self):
         '''
         cria os botões clicáveis com a função de mudar o texto
         '''
-        self.frameButtons = tk.Frame(self.root)
+        self.frameButtons = Frame(self.root)
         for row in range(GAME_ROWS):
             for column in range(GAME_COLUMNS):
-                btn = tk.Button(self.frameButtons, text='', 
+                btn = Button(self.frameButtons, text='', 
                         width=5, height=2, relief='solid', font='None 28 bold', 
                         # command=lambda position=(row, column):self.control(position))
                 )
@@ -139,7 +147,7 @@ class MemoryGame:
                          position=(row, column)
                          :
                          self.control(button, position))
-                btn.grid(row=row, column=column, sticky=tk.NSEW, padx=1, pady=1)
+                btn.grid(row=row, column=column, sticky=NSEW, padx=1, pady=1)
         self.frameButtons.grid()
 
     def control(self, button, position):
@@ -154,12 +162,12 @@ class MemoryGame:
             time.sleep(0.6)
             self.validate()
 
-    def click1(self, button:tk.Button, position):
+    def click1(self, button:Button, position):
         row, column = position
         self.choiceOne = self.slots[row][column]
         button.config(text=self.choiceOne)
 
-    def click2(self, button:tk.Button, position):
+    def click2(self, button:Button, position):
         row, column = position
         self.choiceTwo = self.slots[row][column]
         button.config(text=self.choiceTwo)   
@@ -182,7 +190,6 @@ class MemoryGame:
             self.ButtonOne, self.ButtonTwo = None, None
             if self.discoveredCards == len(self.emojiList):
                 messagebox.showinfo('ACABOU', 'FIM DE JOGO.')
-                print(len(self.PlayerOneCards), len(self.PlayerTwoCards))
                 self.endGame()
         else:
             # messagebox.showinfo('Troca de jogadores', 'Cartas não iguais, troca de jogadores.')
@@ -193,32 +200,31 @@ class MemoryGame:
             self.choiceOne, self.choiceTwo = None, None
 
     def endGame(self):
-        topLevelWinner = tk.Toplevel(self.root)
+        topLevelWinner = Toplevel(self.root)
         topLevelWinner.grab_set()
         topLevelWinner.resizable(False, False)
         topLevelWinner.protocol("WM_DELETE_WINDOW", self.close)
-        tk.Label(topLevelWinner,
+        Label(topLevelWinner,
                     text=f'Vitória do jogador {1 if len(self.PlayerOneCards) > len(self.PlayerTwoCards) else 2}', 
                     font='Helvetica 14 bold').grid(columnspan=3)
-        tk.Button(topLevelWinner, text='Jogar Novamente', font='Helvetica 12 bold',
-                    command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=tk.NSEW)
-        tk.Button(topLevelWinner, text='Sair', font='Helvetica 12 bold',
-                    command=self.close).grid(row=1, column=1, sticky=tk.NSEW, columnspan=2)
+        Button(topLevelWinner, text='Jogar Novamente', font='Helvetica 12 bold',
+                    command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=NSEW)
+        Button(topLevelWinner, text='Sair', font='Helvetica 12 bold',
+                    command=self.close).grid(row=1, column=1, sticky=NSEW, columnspan=2)
         
     def close(self):
-        self.root.destroy()
+        if self.controller != None:
+            self.controller.goingBack(self.root)
+        else:
+            self.root.destroy()
 
-    def RestartGame(self, toplevel:tk.Toplevel):
+    def RestartGame(self, toplevel:Toplevel):
         toplevel.destroy()
         self.frameButtons.destroy()
         self.frameHeader.destroy()
         self.startGame()
 
-
-root = tk.Tk()
-app = MemoryGame(root)
-root.mainloop()
-# if __name__ == '__main__':
-#     root = tk.Tk()
-#     app = MemoryGame(root)
-#     root.mainloop()
+if __name__ == '__main__':
+    root = Tk()
+    app = TileMatching(root)
+    root.mainloop()

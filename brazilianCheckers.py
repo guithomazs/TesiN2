@@ -28,15 +28,24 @@ class PlayerTwo(Enum):
 
 
 class BrazilianCheckers:
-    def __init__(self, master=Tk) -> None:
+    def __init__(self, master=Tk, controller=None) -> None:
         self.root = master
         self.root.resizable(False, False)
-        self.root.title('Checkers in tkinter')
+        self.root.title('Brazilian Checkers in tkinter')
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
         self.title_font = 'Helvetica 16 bold'
         self.sub_font = 'Helvetica 12'
+        self.controller = controller
+        if controller != None:
+            self.changeCloseButtonFunction()
         self.startGame()
+
+    def changeCloseButtonFunction(self):
+        self.root.protocol('WM_DELETE_WINDOW', self.goBackFunction)
+
+    def goBackFunction(self):
+        self.controller.goingBack(self.root)
 
     def startGame(self):    
         self.player_one_remaining = 12
@@ -381,6 +390,7 @@ class BrazilianCheckers:
             self.label_player_two_cards.config(text=f'Peças Restantes: {self.player_two_remaining}')
         if self.player_one_remaining == 0 or self.player_two_remaining == 0:
             self.finished = True
+            self.root.update()
             self.endGame()
 
     def canTurnSuperPiece(self, row, column):
@@ -420,6 +430,7 @@ class BrazilianCheckers:
         self.has_valid_tiles = False
         self.mapPiecesObrigatory(self.player_one_pieces if self.player_turn else self.player_two_pieces) 
         if not self.has_valid_tiles and not self.finished:
+            self.root.update()
             self.endGame()
 
     def mapPiecesObrigatory(self, pieces_list):
@@ -500,7 +511,6 @@ class BrazilianCheckers:
             textEnd =  f'Jogador {1 if not self.player_turn else 2} ficou sem peças.'
             title = 'Fim de jogo!!!'
         topLevelWinner = Toplevel(self.root)
-        topLevelWinner.grab_set()
         topLevelWinner.resizable(False, False)
         topLevelWinner.protocol("WM_DELETE_WINDOW", self.close)
         topLevelWinner.title(title)
@@ -514,9 +524,13 @@ class BrazilianCheckers:
                     command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=NSEW)
         Button(topLevelWinner, text='Sair', font='Helvetica 12 bold',
                     command=self.close).grid(row=2, column=1, sticky=NSEW, columnspan=2)
+        topLevelWinner.grab_set()
         
     def close(self):
-        self.root.destroy()
+        if self.controller != None:
+            self.controller.goingBack(self.root)
+        else:
+            self.root.destroy()
 
     def RestartGame(self, toplevel:Toplevel):
         toplevel.destroy()
