@@ -1,4 +1,5 @@
 import tkinter as tk
+from tkinter import ttk
 
 # --- constants --- (UPPER_CASE_NAMES)
 
@@ -71,9 +72,10 @@ class GameSelectButton(tk.Button):
         self['fg'] = GAME_SELECT_BUTTON_FOREGROUND
 
 
-# GAME HUB BUTTONS
-PSEUDO_MENU_BUTTON_FOREGROUND = "black"
-PSEUDO_MENU_BUTTON_BACKGROUND = "#2c2c2c"
+# MENU BUTTONS
+# PSEUDO_MENU_BUTTON_FOREGROUND = "#502bc2"
+PSEUDO_MENU_BUTTON_FOREGROUND = "lime"
+PSEUDO_MENU_BUTTON_BACKGROUND = "black"
 PSEUDO_MENU_BUTTON_FOREGROUND_HOVER = "white"
 PSEUDO_MENU_BUTTON_BACKGROUND_HOVER = "black"
 PSEUDO_MENU_BUTTON_FONT = 'Georgia 14 bold'
@@ -102,6 +104,80 @@ class PseudoMenuButton(tk.Button):
         self['bg'] = PSEUDO_MENU_BUTTON_BACKGROUND
         self['fg'] = PSEUDO_MENU_BUTTON_FOREGROUND
 
+WIFI_FOREGROUND_COLORS = [PSEUDO_MENU_BUTTON_FOREGROUND, PSEUDO_MENU_BUTTON_FOREGROUND_HOVER]
+class WifiButton(PseudoMenuButton):
+    def __init__(self, master, text='', command=None, relief='groove', bd=2, **kwargs):
+        super().__init__(master, bd=bd, font=PSEUDO_MENU_BUTTON_FONT, padx=5, pady=2, 
+                         fg=PSEUDO_MENU_BUTTON_FOREGROUND, 
+                         bg=PSEUDO_MENU_BUTTON_BACKGROUND,
+                         activebackground=PSEUDO_MENU_BUTTON_BACKGROUND_HOVER,
+                         activeforeground=PSEUDO_MENU_BUTTON_FOREGROUND_HOVER, 
+                         highlightthickness=0, 
+                         text=text,
+                         command=command,
+                         relief=relief,
+                        )
+        self.button_status = True
+        
+        self.bind('<ButtonPress-1>', self.on_press)
+        self.bind('<Enter>', lambda event: self.on_enter(PSEUDO_MENU_BUTTON_BACKGROUND_HOVER, 
+                                                   PSEUDO_MENU_BUTTON_FOREGROUND_HOVER))
+        self.bind('<Leave>', lambda event: self.on_leave(PSEUDO_MENU_BUTTON_BACKGROUND, 
+                                                   PSEUDO_MENU_BUTTON_FOREGROUND))
+
+    def on_press(self, event):
+        if self.button_status:
+            self['bg'] = PSEUDO_MENU_BUTTON_BACKGROUND_HOVER
+            self['fg'] = PSEUDO_MENU_BUTTON_FOREGROUND_HOVER
+            self.bind('<Enter>', lambda event: self.on_enter(PSEUDO_MENU_BUTTON_BACKGROUND, 
+                                            PSEUDO_MENU_BUTTON_FOREGROUND))
+            self.bind('<Leave>', lambda event: self.on_leave(PSEUDO_MENU_BUTTON_BACKGROUND_HOVER, 
+                                            PSEUDO_MENU_BUTTON_FOREGROUND_HOVER))
+        else:
+            self.bind('<Enter>', lambda event: self.on_enter(PSEUDO_MENU_BUTTON_BACKGROUND_HOVER, 
+                                            PSEUDO_MENU_BUTTON_FOREGROUND_HOVER))
+            self.bind('<Leave>', lambda event: self.on_enter(PSEUDO_MENU_BUTTON_BACKGROUND, 
+                                            PSEUDO_MENU_BUTTON_FOREGROUND))
+        self.button_status = not self.button_status
+
+    def on_enter(self, background_hover, foreground_hover):
+        self['bg'] = background_hover
+        self['fg'] = foreground_hover
+
+    def on_leave(self, background_hover, foreground_hover):
+        self['bg'] = background_hover
+        self['fg'] = foreground_hover
+
+# PLAYER LIST BUTTONS
+PLAYER_LIST_BUTTON_FOREGROUND = "lime"
+PLAYER_LIST_BUTTON_BACKGROUND = "black"
+PLAYER_LIST_BUTTON_FOREGROUND_HOVER = "white"
+PLAYER_LIST_BUTTON_BACKGROUND_HOVER = "black"
+PLAYER_LIST_BUTTON_FONT = 'Georgia 14 bold'
+
+class PlayerListButton(tk.Button):
+    def __init__(self, master, text='', command=None, relief='groove', bd=2, **kwargs):
+        super().__init__(master, bd=bd, font=PLAYER_LIST_BUTTON_FONT, padx=5, pady=2, 
+                         fg=PLAYER_LIST_BUTTON_FOREGROUND, 
+                         bg=PLAYER_LIST_BUTTON_BACKGROUND,
+                         activebackground=PLAYER_LIST_BUTTON_BACKGROUND_HOVER,
+                         activeforeground=PLAYER_LIST_BUTTON_FOREGROUND_HOVER, 
+                         highlightthickness=0, 
+                         text=text,
+                         command=command,
+                         relief=relief,
+                        )
+
+        self.bind('<Enter>', self.on_enter)
+        self.bind('<Leave>', self.on_leave)
+
+    def on_enter(self, event):
+        self['bg'] = PSEUDO_MENU_BUTTON_BACKGROUND_HOVER
+        self['fg'] = PSEUDO_MENU_BUTTON_FOREGROUND_HOVER
+
+    def on_leave(self, event):
+        self['bg'] = PSEUDO_MENU_BUTTON_BACKGROUND
+        self['fg'] = PSEUDO_MENU_BUTTON_FOREGROUND
 
 
 class MainTitleBar(tk.Frame):
@@ -154,7 +230,6 @@ class MainTitleBar(tk.Frame):
         
     def on_minimize(self):
         print('TODO: minimize')
-
 
 class InGameTitleBar(MainTitleBar):
     def __init__(self, master, *args, **kwargs):
@@ -234,23 +309,49 @@ class GridInGameTitleBar(GridMainTitleBar):
         go_back_button.grid(row=0, column=0, sticky=tk.NSEW)
         self.elements_grid()
 
-# --- main ---
-if __name__ == '__main__':
-    root = tk.Tk()
-    # turns off title bar, geometry
-    root.overrideredirect(True)
+class GridScrollableFrame(tk.Frame):
+    def __init__(self, container, *args, **kwargs):
+        super().__init__(container, *args, **kwargs)
+        self.canvas = tk.Canvas(self)
+        self.canvas.config(background='black')
+        scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = tk.Frame(self.canvas)
 
-    # set new geometry
-    root.geometry('400x100+200+200')
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(
+                scrollregion=self.canvas.bbox("all")
+            )
+        )
 
-    # title_bar = MainTitleBar(root) 
-    title_bar = InGameTitleBar(root) 
-    #title_bar.pack()  # it is inside `TitleBar.__init__()`
+        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
 
-    # a canvas for the main area of the window
-    window = tk.Canvas(root, bg=WINDOW_BACKGROUND, highlightthickness=0)
+        self.canvas.configure(yscrollcommand=scrollbar.set)
 
-    # pack the widgets
-    window.pack(expand=True, fill='both')
+        self.canvas.grid(sticky=tk.NSEW, row=0, column=0)
+        scrollbar.grid(sticky=tk.NSEW, row=0, column=1)
+        self.canvas.bind_all("<MouseWheel>", self._on_mousewheel)
 
-    root.mainloop()
+    def _on_mousewheel(self, event):
+        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+
+
+TREEVIEW_INTERN_FONT = 'Helvetica 12 bold'
+class PlayersTreeView(ttk.Treeview):
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        treeview_scrollbar = tk.Scrollbar(master, 
+                                       orient=tk.VERTICAL, 
+                                       command=self.yview
+        )
+        treeview_scrollbar.grid(row=0, column=1, sticky='ns')
+        self.config(yscrollcommand=treeview_scrollbar.set)
+
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure("Treeview", background='black', 
+                        foreground='lime',
+                        font=TREEVIEW_INTERN_FONT,
+        )
+        style.theme_use("clam")
+        style.map("Treeview", background=[('selected', 'green')])

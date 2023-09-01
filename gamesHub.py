@@ -12,7 +12,8 @@ from utils import (MainTitleBar,
                    GridMainTitleBar,
                    GridInGameTitleBar,
                    GameSelectButton,
-                   PseudoMenuButton
+                   PseudoMenuButton,
+                   WifiButton
 )
 
 LABEL_FRAME_FONT = 'Arial 24 bold'
@@ -31,11 +32,16 @@ class GamesHubScreen:
         pseudo_menu = Frame(root)
         PseudoMenuButton(pseudo_menu, text='🏠',
                          command=lambda: GamesHubScreen.goingBack(root)).grid(row=0, column=0, sticky=NSEW)
+        WifiButton(pseudo_menu, text='WIFI',
+                                                                       ).grid(row=1, column=0, sticky=NSEW)
         PseudoMenuButton(pseudo_menu, text='Jogadores',
-                         command=lambda: GamesHubScreen.changeCurrentScreen(Players, root)).grid(row=0, column=1, sticky=NSEW)
+                         command=lambda: GamesHubScreen.changeCurrentScreen(Players, root)).grid(row=0, column=1, rowspan=2, sticky=NSEW)
         PseudoMenuButton(pseudo_menu, text='Leaderboards',
-                         command=lambda: GamesHubScreen.changeCurrentScreen(Leaderboards, root)).grid(row=0, column=2, sticky=NSEW)
-        pseudo_menu.grid()
+                         command=lambda: GamesHubScreen.changeCurrentScreen(Leaderboards, root)).grid(row=0, column=2, rowspan=2, sticky=NSEW)
+        pseudo_menu.grid_columnconfigure(0, weight=1)
+        pseudo_menu.grid_columnconfigure(1, weight=2)
+        pseudo_menu.grid_columnconfigure(2, weight=2)
+        pseudo_menu.grid(sticky=NSEW)
 
     def createFrameButtons(self):
         frame_buttons = LabelFrame(self.root, text='Jogos', font=LABEL_FRAME_FONT)
@@ -49,7 +55,8 @@ class GamesHubScreen:
                         command=lambda: self.changeCurrentScreen(ClassicCheckers, self.root)  ).grid(sticky=NSEW, padx=2, pady=2)
         GameSelectButton(frame_buttons, text='Damas Brasileira', 
                         command=lambda: self.changeCurrentScreen(BrazilianCheckers, self.root)).grid(sticky=NSEW, padx=2, pady=2)
-        frame_buttons.grid()
+        frame_buttons.grid(sticky=NSEW)
+        frame_buttons.grid_columnconfigure(0, weight=1)
 
     @staticmethod
     def changeCurrentScreen(Screen, root):
