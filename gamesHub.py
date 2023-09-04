@@ -7,6 +7,7 @@ from velha import TicTacToe
 from tileMatching import TileMatching
 from playerListScreen import Players
 from leaderboards import Leaderboards
+from database.playerDatabase import PlayerDBCommands
 from utils import (MainTitleBar,
                    InGameTitleBar,
                    GridMainTitleBar,
@@ -16,7 +17,10 @@ from utils import (MainTitleBar,
                    WifiButton
 )
 
+
 LABEL_FRAME_FONT = 'Arial 24 bold'
+PLAYERS_TITLE_FONT = 'Helvetica 16 bold'
+PLAYERS_OPTIONS_FONT = 'Helvetica 13 bold'
 class GamesHubScreen:
     def __init__(self, master: Tk) -> None:
         self.root = master
@@ -25,10 +29,11 @@ class GamesHubScreen:
         self.root.title('Games Hub')
 
         GamesHubScreen.createMenu(self.root)
+        self.createCharChoice()
         self.createFrameButtons()
         
     @staticmethod
-    def createMenu(root):
+    def createMenu(root:Tk):
         pseudo_menu = Frame(root)
         PseudoMenuButton(pseudo_menu, text='🏠',
                          command=lambda: GamesHubScreen.goingBack(root)).grid(row=0, column=0, sticky=NSEW)
@@ -42,6 +47,41 @@ class GamesHubScreen:
         pseudo_menu.grid_columnconfigure(1, weight=2)
         pseudo_menu.grid_columnconfigure(2, weight=2)
         pseudo_menu.grid(sticky=NSEW)
+
+    def controlPlayerUnique(self, which_combobox):
+        if self.p2_choice.get() != self.p1_choice.get():
+            return
+    
+        self.p2_choice.set('') if which_combobox == 1 else self.p1_choice.set('')
+
+    def createCharChoice(self):
+        frame_players = Frame(self.root)
+        players_name = self.getPlayersName()
+
+        p1 = Label(frame_players, text='Jogador 1', font=PLAYERS_TITLE_FONT)
+        self.p1_choice = ttk.Combobox(frame_players, state='readonly', values=players_name, font=PLAYERS_OPTIONS_FONT)
+
+        p2 = Label(frame_players, text='Jogador 2', font=PLAYERS_TITLE_FONT)
+        self.p2_choice = ttk.Combobox(frame_players, state='readonly', values=players_name, font=PLAYERS_OPTIONS_FONT)
+        p1.grid(row=0, column=0, sticky=W, padx=15)
+        p2.grid(row=0, column=1, sticky=E, padx=15)
+        self.p1_choice.grid(row=1, column=0, sticky=W, padx=15)
+        self.p2_choice.grid(row=1, column=1, sticky=E, padx=15)
+        frame_players.grid(columnspan=2, sticky=NSEW)
+
+        self.p1_choice.bind("<<ComboboxSelected>>", lambda event: self.controlPlayerUnique(1))
+        self.p2_choice.bind("<<ComboboxSelected>>", lambda event: self.controlPlayerUnique(2))
+
+        frame_players.grid_columnconfigure(0, weight=1)
+        frame_players.grid_columnconfigure(1, weight=1)
+
+
+    def getPlayersName(self):
+        items = PlayerDBCommands.getDataBasePlayers()
+        players_name = []
+        for item in items:
+            players_name.append(item[0])
+        return players_name
 
     def createFrameButtons(self):
         frame_buttons = LabelFrame(self.root, text='Jogos', font=LABEL_FRAME_FONT)

@@ -19,13 +19,15 @@ WINDOW_FOREGROUND = "black"
 
 # --- classes --- (CamelCaseNames)
 
+MY_BUTTON_FONT = 'Georgia 12 bold'
 class MyButton(tk.Button):
     def __init__(self, master, text='x', command=None, **kwargs):
-        super().__init__(master, bd=0, font="bold", padx=5, pady=2, 
+        super().__init__(master, bd=0, padx=5, pady=2, 
                          fg=BUTTON_FOREGROUND, 
                          bg=BUTTON_BACKGROUND,
                          activebackground=BUTTON_BACKGROUND_HOVER,
                          activeforeground=BUTTON_FOREGROUND_HOVER, 
+                         font=MY_BUTTON_FONT,
                          highlightthickness=0, 
                          text=text,
                          command=command)
@@ -126,6 +128,7 @@ class WifiButton(PseudoMenuButton):
                                                    PSEUDO_MENU_BUTTON_FOREGROUND))
 
     def on_press(self, event):
+        self.button_status = not self.button_status
         if self.button_status:
             self['bg'] = PSEUDO_MENU_BUTTON_BACKGROUND_HOVER
             self['fg'] = PSEUDO_MENU_BUTTON_FOREGROUND_HOVER
@@ -138,7 +141,6 @@ class WifiButton(PseudoMenuButton):
                                             PSEUDO_MENU_BUTTON_FOREGROUND_HOVER))
             self.bind('<Leave>', lambda event: self.on_enter(PSEUDO_MENU_BUTTON_BACKGROUND, 
                                             PSEUDO_MENU_BUTTON_FOREGROUND))
-        self.button_status = not self.button_status
 
     def on_enter(self, background_hover, foreground_hover):
         self['bg'] = background_hover
@@ -350,6 +352,7 @@ class PlayersTreeView(ttk.Treeview):
         style = ttk.Style()
         style.theme_use('clam')
         style.configure("Treeview", background='black', 
+                        fieldbackground='black',
                         foreground='lime',
                         font=TREEVIEW_INTERN_FONT,
         )
