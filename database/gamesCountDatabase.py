@@ -11,15 +11,31 @@ class GamesCountDB(Enum):
         f'CREATE TABLE IF NOT EXISTS {TABLE_NAME} '
         '('
         'Player_id                INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
-        'TicTacToe_played         INTEGER NOT NULL DEFAULT 0'
-        'TicTacToe_won            INTEGER NOT NULL DEFAULT 0'
-        'TileMatching_played      INTEGER NOT NULL DEFAULT 0'
-        'TileMatching_won         INTEGER NOT NULL DEFAULT 0'
-        'ClassicCheckers_played   INTEGER NOT NULL DEFAULT 0'
-        'ClassicCheckers_won      INTEGER NOT NULL DEFAULT 0'
-        'BrazilianCheckers_played INTEGER NOT NULL DEFAULT 0'
+        'TicTacToe_played         INTEGER NOT NULL DEFAULT 0,'
+        'TicTacToe_won            INTEGER NOT NULL DEFAULT 0,'
+        'TileMatching_played      INTEGER NOT NULL DEFAULT 0,'
+        'TileMatching_won         INTEGER NOT NULL DEFAULT 0,'
+        'ClassicCheckers_played   INTEGER NOT NULL DEFAULT 0,'
+        'ClassicCheckers_won      INTEGER NOT NULL DEFAULT 0,'
+        'BrazilianCheckers_played INTEGER NOT NULL DEFAULT 0,'
         'BrazilianCheckers_won    INTEGER NOT NULL DEFAULT 0'
         ')'    
+    )
+
+    SQL_INSERT_PLAYER = (
+        f'INSERT INTO {TABLE_NAME} ('
+            'Player_id,'
+            'TicTacToe_played,'
+            'TicTacToe_won,'
+            'TileMatching_played,'
+            'TileMatching_won,'
+            'ClassicCheckers_played,'
+            'ClassicCheckers_won,'
+            'BrazilianCheckers_played,'
+            'BrazilianCheckers_won'
+        ') VALUES ('
+                'NULL, 0, 0, 0, 0, 0, 0, 0, 0'
+            ')'
     )
 
     SQL_LIST_PLAYERS = (
@@ -32,7 +48,11 @@ class GamesCountDB(Enum):
 
     SQL_DELETE_ITEM = (
         f'DELETE FROM {TABLE_NAME} '
-        'WHERE game_id = ?'
+        'WHERE Player_id = ?'
+    )
+
+    SQL_GET_LAST = (
+        f'SELECT * FROM {TABLE_NAME}'
     )
 
     @staticmethod
@@ -47,6 +67,8 @@ class GamesCountDB(Enum):
         connection, cursor = GamesCountDB.connectDataBase()
         cursor.execute(GamesCountDB.SQL_LIST_PLAYERS.value)
         connection.commit()
+        cursor.close()
+        connection.close()
         return cursor.fetchall()
     
     @staticmethod
@@ -55,12 +77,43 @@ class GamesCountDB(Enum):
         connection, cursor = GamesCountDB.connectDataBase()
         cursor.execute(GamesCountDB.SQL_DELETE_ITEM.value, [nick])
         connection.commit()
+        cursor.close()
+        connection.close()
 
     @staticmethod
     def createDataBase():
         connection, cursor = GamesCountDB.connectDataBase()
         cursor.execute(GamesCountDB.SQL_CREATE_TABLE.value)
         connection.commit()
+        cursor.close()
+        connection.close()
+
+    @staticmethod
+    def createNewPlayer():
+        connection, cursor = GamesCountDB.connectDataBase()
+        cursor.execute(GamesCountDB.SQL_CREATE_TABLE.value)
+        connection.commit()
+        cursor.execute(GamesCountDB.SQL_INSERT_PLAYER.value)
+        connection.commit()
+        cursor.close()
+        connection.close()
+    
+    @staticmethod
+    def getLastPlayer():
+        GamesCountDB.createDataBase()
+        connection, cursor = GamesCountDB.connectDataBase()
+        cursor.execute(GamesCountDB.SQL_GET_LAST.value)
+        
+        row = cursor.fetchall()
+        last_player = row[-1]
+        print(last_player)
+
+        cursor.close()
+        connection.close()
+        return last_player
+    
 
 if __name__ == '__main__':
     GamesCountDB.createDataBase()
+    GamesCountDB.createNewPlayer()
+    GamesCountDB.getLastPlayer()

@@ -21,9 +21,9 @@ class PlayerDBCommands(Enum):
 
     SQL_INSERIR_JOGADOR = (
         f'INSERT INTO {TABLE_NAME}'
-        '(nick, password)'
+        '(nick, password, games_count_id)'
         'VALUES '
-        '(?, ?)'
+        '(?, ?, ?)'
     )
 
     SQL_LIST_PLAYERS = (
