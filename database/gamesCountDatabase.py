@@ -7,7 +7,7 @@ class GamesCountDB(Enum):
     DB_NAME = 'players.sqlite3'
     DB_FILE = ROOT_DIR / DB_NAME
     TABLE_NAME = 'games'
-    SQL_CREATE_TABLE = (
+    CREATE_TABLE = (
         f'CREATE TABLE IF NOT EXISTS {TABLE_NAME} '
         '('
         'Player_id                INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
@@ -22,7 +22,7 @@ class GamesCountDB(Enum):
         ')'    
     )
 
-    SQL_INSERT_PLAYER = (
+    INSERT_PLAYER = (
         f'INSERT INTO {TABLE_NAME} ('
             'Player_id,'
             'TicTacToe_played,'
@@ -38,20 +38,25 @@ class GamesCountDB(Enum):
             ')'
     )
 
-    SQL_LIST_PLAYERS = (
+    SPECIFIC_PLAYER_DATA = (
+        f'SELECT * FROM {TABLE_NAME} '
+        'WHERE Player_id = ?'
+    )
+
+    LIST_PLAYERS = (
         f'SELECT * FROM {TABLE_NAME}'
     )
 
-    SQL_DELETE_ALL = (
+    DELETE_ALL = (
         f'DELETE FROM {TABLE_NAME}'
     )
 
-    SQL_DELETE_ITEM = (
+    DELETE_ITEM = (
         f'DELETE FROM {TABLE_NAME} '
         'WHERE Player_id = ?'
     )
 
-    SQL_GET_LAST = (
+    GET_LAST = (
         f'SELECT * FROM {TABLE_NAME}'
     )
 
@@ -65,7 +70,7 @@ class GamesCountDB(Enum):
     def getDataBasePlayers():
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.SQL_LIST_PLAYERS.value)
+        cursor.execute(GamesCountDB.LIST_PLAYERS.value)
         connection.commit()
         cursor.close()
         connection.close()
@@ -75,7 +80,7 @@ class GamesCountDB(Enum):
     def removePlayer(nick):
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.SQL_DELETE_ITEM.value, [nick])
+        cursor.execute(GamesCountDB.DELETE_ITEM.value, [nick])
         connection.commit()
         cursor.close()
         connection.close()
@@ -83,7 +88,7 @@ class GamesCountDB(Enum):
     @staticmethod
     def createDataBase():
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.SQL_CREATE_TABLE.value)
+        cursor.execute(GamesCountDB.CREATE_TABLE.value)
         connection.commit()
         cursor.close()
         connection.close()
@@ -91,9 +96,9 @@ class GamesCountDB(Enum):
     @staticmethod
     def createNewPlayer():
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.SQL_CREATE_TABLE.value)
+        cursor.execute(GamesCountDB.CREATE_TABLE.value)
         connection.commit()
-        cursor.execute(GamesCountDB.SQL_INSERT_PLAYER.value)
+        cursor.execute(GamesCountDB.INSERT_PLAYER.value)
         connection.commit()
         cursor.close()
         connection.close()
@@ -102,18 +107,38 @@ class GamesCountDB(Enum):
     def getLastPlayer():
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.SQL_GET_LAST.value)
+        cursor.execute(GamesCountDB.GET_LAST.value)
         
         row = cursor.fetchall()
         last_player = row[-1]
-        print(last_player)
 
         cursor.close()
         connection.close()
         return last_player
     
+    @staticmethod
+    def printAllPlayers():
+        GamesCountDB.createDataBase()
+        connection, cursor = GamesCountDB.connectDataBase()
+        cursor.execute(GamesCountDB.GET_LAST.value)
+        print(cursor.fetchall())
+        cursor.close()
+        connection.close()
+
+    @staticmethod
+    def getSpecificPlayerData(player_id):
+        GamesCountDB.createDataBase()
+        connection, cursor = GamesCountDB.connectDataBase()
+        cursor.execute(GamesCountDB.SPECIFIC_PLAYER_DATA.value, (player_id))
+        user_data = cursor.fetchone()
+        cursor.close()
+        connection.close()
+        return user_data
+    
 
 if __name__ == '__main__':
     GamesCountDB.createDataBase()
-    GamesCountDB.createNewPlayer()
+    # GamesCountDB.createNewPlayer()
     GamesCountDB.getLastPlayer()
+    GamesCountDB.getSpecificPlayerData("1")
+    GamesCountDB.printAllPlayers()
