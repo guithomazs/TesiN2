@@ -1,14 +1,16 @@
 from pathlib import Path
 from enum import Enum
 import sqlite3
+
 if __name__ == '__main__':
-    from gamesCountDatabase import GamesCountDB
+    from gamesCountDatabase import GamesCountDB, GamesDB
 else:
-    from database.gamesCountDatabase import GamesCountDB
+    from database.gamesCountDatabase import GamesCountDB, GamesDB
 
 
-GAMES_COUNT_TABLE = GamesCountDB.TABLE_NAME
-class PlayerDBCommands(Enum):
+GAMES_COUNT_TABLE = GamesDB.TABLE_NAME
+
+class PlayerDB(Enum):
     ROOT_DIR = Path(__file__).parent
     DB_NAME = 'players.sqlite3'
     DB_FILE = ROOT_DIR / DB_NAME
@@ -17,7 +19,7 @@ class PlayerDBCommands(Enum):
         f'CREATE TABLE IF NOT EXISTS {TABLE_NAME}'
         '('
         'player_id       INTEGER PRIMARY KEY, '
-        'nick            TEXT, '
+        'nick            TEXT UNIQUE, '
         'password        TEXT, '
         'games_count_id  INTEGER NOT NULL, '
         'FOREIGN KEY (games_count_id) references '
@@ -55,9 +57,12 @@ class PlayerDBCommands(Enum):
         'WHERE nick = ?'
     )
 
+
+class PlayerDBCommands():
+
     @staticmethod
     def connectDataBase():
-        connection = sqlite3.connect(PlayerDBCommands.DB_FILE.value)
+        connection = sqlite3.connect(PlayerDB.DB_FILE.value)
         cursor = connection.cursor()
         return connection, cursor
     
@@ -65,7 +70,7 @@ class PlayerDBCommands(Enum):
     def getDataBasePlayers():
         PlayerDBCommands.createDataBase()
         connection, cursor = PlayerDBCommands.connectDataBase()
-        cursor.execute(PlayerDBCommands.LIST_PLAYERS.value)
+        cursor.execute(PlayerDB.LIST_PLAYERS.value)
         connection.commit()
         return cursor.fetchall()
     
@@ -73,14 +78,14 @@ class PlayerDBCommands(Enum):
     def removePlayer(nick):
         PlayerDBCommands.createDataBase()
         connection, cursor = PlayerDBCommands.connectDataBase()
-        cursor.execute(PlayerDBCommands.DELETE_ITEM.value, (nick, ))
+        cursor.execute(PlayerDB.DELETE_ITEM.value, (nick, ))
         connection.commit()
 
     @staticmethod
     def getPlayerData(nick):
         PlayerDBCommands.createDataBase()
         connection, cursor = PlayerDBCommands.connectDataBase()
-        cursor.execute(PlayerDBCommands.GET_SPECIFIC_PLAYER.value, (nick, ))
+        cursor.execute(PlayerDB.GET_SPECIFIC_PLAYER.value, (nick, ))
         player = cursor.fetchone()
         print(player)
         connection.commit()
@@ -88,13 +93,13 @@ class PlayerDBCommands(Enum):
     @staticmethod
     def createDataBase():
         connection, cursor = PlayerDBCommands.connectDataBase()
-        cursor.execute(PlayerDBCommands.CREATE_TABLE.value)
+        cursor.execute(PlayerDB.CREATE_TABLE.value)
         connection.commit()
 
     @staticmethod
     def getAllPlayers():
         connection, cursor = PlayerDBCommands.connectDataBase()
-        cursor.execute(PlayerDBCommands.LIST_PLAYERS.value)
+        cursor.execute(PlayerDB.LIST_PLAYERS.value)
         print(cursor.fetchall())
         cursor.close()
         connection.close()
@@ -102,7 +107,7 @@ class PlayerDBCommands(Enum):
     @staticmethod
     def insertPlayer(nick, password, games_counter):
         connection, cursor = PlayerDBCommands.connectDataBase()
-        cursor.execute(PlayerDBCommands.INSERIR_JOGADOR.value, (nick, password, games_counter))
+        cursor.execute(PlayerDB.INSERIR_JOGADOR.value, (nick, password, games_counter))
         connection.commit()
         cursor.close()
         connection.close()
@@ -110,13 +115,24 @@ class PlayerDBCommands(Enum):
     @staticmethod
     def getGamesCountInfo(nick):
         connection, cursor = PlayerDBCommands.connectDataBase()
-        cursor.execute(PlayerDBCommands.GET_GAME_COUNT_ID.value, (nick, ))
+        cursor.execute(PlayerDB.GET_GAME_COUNT_ID.value, (nick, ))
         game_count_id = cursor.fetchone()
         cursor.close()
         connection.close()
         return GamesCountDB.getSpecificPlayerData(game_count_id)
         
-        
+    @staticmethod
+    def setGamePlayed(game, nick, won:bool = False):
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        sql = (
+            f'UPDATE {GAMES_COUNT_TABLE} SET {game}_played = {game}_played + 1 ' + 
+            (f', {game}_won = {game}_won + 1' if won else '') + 
+            ' WHERE nick=?'
+        )
+        cursor.execute(sql, [nick])
+        cursor.close()
+        connection.close()
+        return
 
 if __name__ == '__main__':
     PlayerDBCommands.createDataBase()

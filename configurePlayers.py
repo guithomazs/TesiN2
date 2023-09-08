@@ -1,7 +1,7 @@
 from tkinter import *
 from utils import MyButton
 import sqlite3
-from database.playerDatabase import PlayerDBCommands
+from database.playerDatabase import PlayerDBCommands, PlayerDB
 from database.gamesCountDatabase import GamesCountDB
 
 WINDOW_BG = 'white'
@@ -66,12 +66,13 @@ class NewPlayer(Toplevel):
             try:
                 GamesCountDB.createNewPlayer()
                 game_count_id = GamesCountDB.getLastPlayer()[0]
-                self.cursor.execute(PlayerDBCommands.INSERIR_JOGADOR.value, (nick, pwd, game_count_id))
+                self.cursor.execute(PlayerDB.INSERIR_JOGADOR.value, (nick, pwd, game_count_id))
                 if self.root_players_treeview != None:
                     self.root_players_treeview.insert('', 'end', values=nick, text=nick)
                 self.connection.commit()
                 self.close()
             except Exception as e:
+                print(e)
                 if type(e) == sqlite3.IntegrityError:
                     self.lbl_nick.config(fg='red')
                     self.createErrorLabel(text='Nick já em uso')
@@ -132,7 +133,7 @@ class RemovePlayer(Toplevel):
         
     def removePlayer(self):
         insert_password = self.ent_password.get()
-        self.cursor.execute(PlayerDBCommands.GET_SPECIFIC_PLAYER.value, [self.nickname])
+        self.cursor.execute(PlayerDB.GET_SPECIFIC_PLAYER.value, [self.nickname])
         _, nickname, player_password, *_ = self.cursor.fetchone()
         if player_password == insert_password:
             PlayerDBCommands.removePlayer(nickname)
@@ -220,9 +221,9 @@ class PlayerInfo(Toplevel):
 
 def lista_players():
     connection, cursor = PlayerDBCommands.connectDataBase()
-    cursor.execute(PlayerDBCommands.CREATE_TABLE.value)
+    cursor.execute(PlayerDB.CREATE_TABLE)
     connection.commit()
-    cursor.execute(PlayerDBCommands.LIST_PLAYERS.value)
+    cursor.execute(PlayerDB.LIST_PLAYERS)
     connection.commit()
     print(cursor.fetchall())
 

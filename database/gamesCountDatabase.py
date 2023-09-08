@@ -2,7 +2,33 @@ from pathlib import Path
 from enum import Enum
 import sqlite3
 
-class GamesCountDB(Enum):
+class CompetitiveGamesNames(Enum):
+    TicTacToe = 'TicTacToe'
+    TileMatching = 'TileMatching'
+    ClassicCheckers = 'ClassicCheckers'
+    BrazilianCheckers = 'BrazilianCheckers'
+
+class TimedGamesNames(Enum):
+    MineSweeper = 'MineSweeper'
+
+def get_games_sql_values():
+    competitive_games = [game.value for game in CompetitiveGamesNames]
+    timed_games = [game.value for game in TimedGamesNames]
+    games_values = ''
+    for game in competitive_games:
+        games_values = games_values + f'{game}_played INTEGER NOT NULL DEFAULT 0,'
+        games_values = games_values + f' {game}_won INTEGER NOT NULL DEFAULT 0, '
+
+    for game in timed_games:
+        games_values = games_values + (
+            f'{game}_best_time INTEGER NOT NULL DEFAULT 0, '
+                if game != timed_games[-1]
+                else 
+            f'{game}_best_time INTEGER NOT NULL DEFAULT 0'
+        )
+    return games_values
+
+class GamesDB(Enum):
     ROOT_DIR = Path(__file__).parent
     DB_NAME = 'players.sqlite3'
     DB_FILE = ROOT_DIR / DB_NAME
@@ -11,31 +37,12 @@ class GamesCountDB(Enum):
         f'CREATE TABLE IF NOT EXISTS {TABLE_NAME} '
         '('
         'Player_id                INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
-        'TicTacToe_played         INTEGER NOT NULL DEFAULT 0,'
-        'TicTacToe_won            INTEGER NOT NULL DEFAULT 0,'
-        'TileMatching_played      INTEGER NOT NULL DEFAULT 0,'
-        'TileMatching_won         INTEGER NOT NULL DEFAULT 0,'
-        'ClassicCheckers_played   INTEGER NOT NULL DEFAULT 0,'
-        'ClassicCheckers_won      INTEGER NOT NULL DEFAULT 0,'
-        'BrazilianCheckers_played INTEGER NOT NULL DEFAULT 0,'
-        'BrazilianCheckers_won    INTEGER NOT NULL DEFAULT 0'
+        + get_games_sql_values() +
         ')'    
     )
 
     INSERT_PLAYER = (
-        f'INSERT INTO {TABLE_NAME} ('
-            'Player_id,'
-            'TicTacToe_played,'
-            'TicTacToe_won,'
-            'TileMatching_played,'
-            'TileMatching_won,'
-            'ClassicCheckers_played,'
-            'ClassicCheckers_won,'
-            'BrazilianCheckers_played,'
-            'BrazilianCheckers_won'
-        ') VALUES ('
-                'NULL, 0, 0, 0, 0, 0, 0, 0, 0'
-            ')'
+        f'INSERT INTO {TABLE_NAME} DEFAULT VALUES'
     )
 
     SPECIFIC_PLAYER_DATA = (
@@ -60,9 +67,12 @@ class GamesCountDB(Enum):
         f'SELECT * FROM {TABLE_NAME}'
     )
 
+
+class GamesCountDB():
+    
     @staticmethod
     def connectDataBase():
-        connection = sqlite3.connect(GamesCountDB.DB_FILE.value)
+        connection = sqlite3.connect(GamesDB.DB_FILE.value)
         cursor = connection.cursor()
         return connection, cursor
     
@@ -70,7 +80,7 @@ class GamesCountDB(Enum):
     def getDataBasePlayers():
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.LIST_PLAYERS.value)
+        cursor.execute(GamesDB.LIST_PLAYERS.value)
         connection.commit()
         cursor.close()
         connection.close()
@@ -80,7 +90,7 @@ class GamesCountDB(Enum):
     def removePlayer(nick):
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.DELETE_ITEM.value, [nick])
+        cursor.execute(GamesDB.DELETE_ITEM.value, [nick])
         connection.commit()
         cursor.close()
         connection.close()
@@ -88,7 +98,7 @@ class GamesCountDB(Enum):
     @staticmethod
     def createDataBase():
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.CREATE_TABLE.value)
+        cursor.execute(GamesDB.CREATE_TABLE.value)
         connection.commit()
         cursor.close()
         connection.close()
@@ -96,9 +106,9 @@ class GamesCountDB(Enum):
     @staticmethod
     def createNewPlayer():
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.CREATE_TABLE.value)
+        cursor.execute(GamesDB.CREATE_TABLE.value)
         connection.commit()
-        cursor.execute(GamesCountDB.INSERT_PLAYER.value)
+        cursor.execute(GamesDB.INSERT_PLAYER.value)
         connection.commit()
         cursor.close()
         connection.close()
@@ -107,7 +117,7 @@ class GamesCountDB(Enum):
     def getLastPlayer():
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.GET_LAST.value)
+        cursor.execute(GamesDB.GET_LAST.value)
         
         row = cursor.fetchall()
         last_player = row[-1]
@@ -120,7 +130,7 @@ class GamesCountDB(Enum):
     def printAllPlayers():
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.GET_LAST.value)
+        cursor.execute(GamesDB.GET_LAST.value)
         print(cursor.fetchall())
         cursor.close()
         connection.close()
@@ -129,7 +139,8 @@ class GamesCountDB(Enum):
     def getSpecificPlayerData(player_id):
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesCountDB.SPECIFIC_PLAYER_DATA.value, (player_id))
+        print(player_id)
+        cursor.execute(GamesDB.SPECIFIC_PLAYER_DATA.value, (player_id))
         user_data = cursor.fetchone()
         cursor.close()
         connection.close()
@@ -138,7 +149,8 @@ class GamesCountDB(Enum):
 
 if __name__ == '__main__':
     GamesCountDB.createDataBase()
-    # GamesCountDB.createNewPlayer()
+    GamesCountDB.createNewPlayer()
     GamesCountDB.getLastPlayer()
     GamesCountDB.getSpecificPlayerData("1")
     GamesCountDB.printAllPlayers()
+    get_games_sql_values()

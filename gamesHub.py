@@ -3,7 +3,7 @@ from tkinter import ttk
 from classicCheckers import ClassicCheckers
 from brazilianCheckers import BrazilianCheckers
 from minas import Minas
-from velha import TicTacToe
+from ticTacToe import TicTacToe
 from tileMatching import TileMatching
 from playerListScreen import Players
 from leaderboards import Leaderboards

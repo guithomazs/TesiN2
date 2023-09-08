@@ -304,7 +304,6 @@ class GridMainTitleBar(tk.Frame):
         # grandparent.wm_state('iconic')
 
 class GridInGameTitleBar(GridMainTitleBar):
-
     def __init__(self, master, *args, **kwargs):
         super().__init__(master, by_its_own=False, *args, **kwargs)
         go_back_button = MyButton(self, text='↩', command=master.destroy)
