@@ -3,17 +3,17 @@ from enum import Enum
 import sqlite3
 
 class CompetitiveGamesNames(Enum):
-    TicTacToe = 'TicTacToe'
-    TileMatching = 'TileMatching'
-    ClassicCheckers = 'ClassicCheckers'
-    BrazilianCheckers = 'BrazilianCheckers'
+    TicTacToe = 'Jogo da velha'
+    TileMatching = 'Jogo da memória'
+    ClassicCheckers = 'Damas Clássicas'
+    BrazilianCheckers = 'Damas Brasileiras'
 
 class TimedGamesNames(Enum):
-    MineSweeper = 'MineSweeper'
+    MineSweeper = 'Campo Minado'
 
 def get_games_sql_values():
-    competitive_games = [game.value for game in CompetitiveGamesNames]
-    timed_games = [game.value for game in TimedGamesNames]
+    competitive_games = [game.name for game in CompetitiveGamesNames]
+    timed_games = [game.name for game in TimedGamesNames]
     games_values = ''
     for game in competitive_games:
         games_values = games_values + f'{game}_played INTEGER NOT NULL DEFAULT 0,'
@@ -36,7 +36,7 @@ class GamesDB(Enum):
     CREATE_TABLE = (
         f'CREATE TABLE IF NOT EXISTS {TABLE_NAME} '
         '('
-        'Player_id                INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
+        'Player_id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, '
         + get_games_sql_values() +
         ')'    
     )
@@ -64,7 +64,7 @@ class GamesDB(Enum):
     )
 
     GET_LAST = (
-        f'SELECT * FROM {TABLE_NAME}'
+        f'SELECT * FROM {TABLE_NAME} ORDER BY Player_id DESC'
     )
 
 
@@ -109,6 +109,7 @@ class GamesCountDB():
         cursor.execute(GamesDB.CREATE_TABLE.value)
         connection.commit()
         cursor.execute(GamesDB.INSERT_PLAYER.value)
+        print("LAST_ROW:", cursor.lastrowid)
         connection.commit()
         cursor.close()
         connection.close()
@@ -119,8 +120,7 @@ class GamesCountDB():
         connection, cursor = GamesCountDB.connectDataBase()
         cursor.execute(GamesDB.GET_LAST.value)
         
-        row = cursor.fetchall()
-        last_player = row[-1]
+        last_player = cursor.fetchone()
 
         cursor.close()
         connection.close()
@@ -130,7 +130,7 @@ class GamesCountDB():
     def printAllPlayers():
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesDB.GET_LAST.value)
+        cursor.execute(GamesDB.LIST_PLAYERS.value)
         print(cursor.fetchall())
         cursor.close()
         connection.close()
@@ -139,7 +139,7 @@ class GamesCountDB():
     def getSpecificPlayerData(player_id):
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        print(player_id)
+        print('quebrou aqui', player_id)
         cursor.execute(GamesDB.SPECIFIC_PLAYER_DATA.value, (player_id))
         user_data = cursor.fetchone()
         cursor.close()
@@ -149,8 +149,7 @@ class GamesCountDB():
 
 if __name__ == '__main__':
     GamesCountDB.createDataBase()
-    GamesCountDB.createNewPlayer()
-    GamesCountDB.getLastPlayer()
-    GamesCountDB.getSpecificPlayerData("1")
+    # GamesCountDB.createNewPlayer()
+    # GamesCountDB.getLastPlayer()
+    # GamesCountDB.getSpecificPlayerData("1")
     GamesCountDB.printAllPlayers()
-    get_games_sql_values()

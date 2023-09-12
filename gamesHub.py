@@ -1,20 +1,22 @@
 from tkinter import *
 from tkinter import ttk
+from tkinter import messagebox
 from classicCheckers import ClassicCheckers
 from brazilianCheckers import BrazilianCheckers
-from minas import Minas
+from mineSweeper import MineSweeper
 from ticTacToe import TicTacToe
 from tileMatching import TileMatching
 from playerListScreen import Players
 from leaderboards import Leaderboards
 from database.playerDatabase import PlayerDBCommands
-from utils import (MainTitleBar,
-                   InGameTitleBar,
-                   GridMainTitleBar,
-                   GridInGameTitleBar,
-                   GameSelectButton,
-                   PseudoMenuButton,
-                   WifiButton
+from database.gamesCountDatabase import (
+    TimedGamesNames, 
+    CompetitiveGamesNames
+)
+from utils import (
+    GameSelectButton,
+    PseudoMenuButton,
+    WifiButton
 )
 
 
@@ -28,8 +30,8 @@ class GamesHubScreen:
         self.root.grid_rowconfigure(0, weight=1)
         self.root.title('Games Hub')
 
-        GamesHubScreen.createMenu(self.root)
-        self.createCharChoice()
+        self.createMenu(self.root)
+        self.createPlayerChoice()
         self.createFrameButtons()
         
     @staticmethod
@@ -51,10 +53,9 @@ class GamesHubScreen:
     def controlPlayerUnique(self, which_combobox):
         if self.p2_choice.get() != self.p1_choice.get():
             return
-    
         self.p2_choice.set('') if which_combobox == 1 else self.p1_choice.set('')
 
-    def createCharChoice(self):
+    def createPlayerChoice(self):
         frame_players = Frame(self.root)
         players_name = self.getPlayersName()
 
@@ -75,33 +76,63 @@ class GamesHubScreen:
         frame_players.grid_columnconfigure(0, weight=1)
         frame_players.grid_columnconfigure(1, weight=1)
 
-
     def getPlayersName(self):
         items = PlayerDBCommands.getDataBasePlayers()
-        players_name = []
+        players_name = ['']
         for item in items:
-            players_name.append(item[0])
+            players_name.append(item[1])
         return players_name
 
     def createFrameButtons(self):
         frame_buttons = LabelFrame(self.root, text='Jogos', font=LABEL_FRAME_FONT)
-        GameSelectButton(frame_buttons, text='Jogo da velha',    
-                        command=lambda: self.changeCurrentScreen(TicTacToe, self.root)        ).grid(sticky=NSEW, padx=2, pady=2)
-        GameSelectButton(frame_buttons, text='Campo Minado',     
-                        command=lambda: self.changeCurrentScreen(Minas, self.root)            ).grid(sticky=NSEW, padx=2, pady=2)
-        GameSelectButton(frame_buttons, text='Jogo da Memória',  
-                        command=lambda: self.changeCurrentScreen(TileMatching, self.root)     ).grid(sticky=NSEW, padx=2, pady=2)
-        GameSelectButton(frame_buttons, text='Damas Clássica',   
-                        command=lambda: self.changeCurrentScreen(ClassicCheckers, self.root)  ).grid(sticky=NSEW, padx=2, pady=2)
-        GameSelectButton(frame_buttons, text='Damas Brasileira', 
-                        command=lambda: self.changeCurrentScreen(BrazilianCheckers, self.root)).grid(sticky=NSEW, padx=2, pady=2)
+        games = {
+            TicTacToe: 'Jogo da velha',
+            MineSweeper: 'Campo Minado',
+            TileMatching: 'Jogo da Memória',
+            ClassicCheckers: 'Damas Clássica',
+            BrazilianCheckers: 'Damas Brasileira',
+                 }
+        for game, text in games.items():
+            GameSelectButton(frame_buttons, text=text,    
+                            command=lambda 
+                                game=game,
+                                player1=self.p1_choice.get(),
+                                player2=self.p2_choice.get()
+                                : 
+                                self.canChangeScreen(
+                                    game,         
+                                    self.root, 
+                                    player1=self.p1_choice.get(), 
+                                    player2=self.p2_choice.get()
+                                )
+            ).grid(sticky=NSEW, padx=2, pady=2)
+        
         frame_buttons.grid(sticky=NSEW)
         frame_buttons.grid_columnconfigure(0, weight=1)
 
+    def canChangeScreen(self, Screen, root, **kwargs):
+        if Screen.__name__ in CompetitiveGamesNames._member_names_:
+            if not self.p1_choice.get() or not self.p2_choice.get():
+                messagebox.showinfo("Aviso.", "Necessário que ambos os jogadores tenham sido selecionados")
+                return
+        
+        if not self.p1_choice.get():
+            kwargs['player1'] = self.p2_choice.get()
+            kwargs['player2'] = None
+        if not kwargs['player1']:
+            messagebox.showinfo("Aviso.", "É necessário selecionar um jogador")
+            return
+        if Screen.__name__ in TimedGamesNames._member_names_:
+            if kwargs['player2']:
+                messagebox.showinfo("Aviso.", "Para jogos de tempo limite selecione apenas um jogador")
+                return
+            kwargs.pop('player2')
+        self.changeCurrentScreen(Screen, root, **kwargs)
+
     @staticmethod
-    def changeCurrentScreen(Screen, root):
+    def changeCurrentScreen(Screen, root, **kwargs):
         GamesHubScreen.cleanUp(root)
-        Screen(root, controller=GamesHubScreen)
+        Screen(root, controller=GamesHubScreen, **kwargs)
 
     @staticmethod
     def goingBack(Screen):

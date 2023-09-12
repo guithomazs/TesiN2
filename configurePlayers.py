@@ -57,6 +57,7 @@ class NewPlayer(Toplevel):
                 font=NEW_PLAYER_FONT, 
                 bg=WINDOW_BG
         ).grid(row=3, columnspan=2, sticky=NSEW)
+   
     def register(self):
         nick = self.ent_nick.get()
         pwd = self.ent_password.get()
@@ -66,7 +67,9 @@ class NewPlayer(Toplevel):
             try:
                 GamesCountDB.createNewPlayer()
                 game_count_id = GamesCountDB.getLastPlayer()[0]
+                print("LAST_ROW2:", game_count_id)
                 self.cursor.execute(PlayerDB.INSERIR_JOGADOR.value, (nick, pwd, game_count_id))
+                self.cursor.lastrowid
                 if self.root_players_treeview != None:
                     self.root_players_treeview.insert('', 'end', values=nick, text=nick)
                 self.connection.commit()

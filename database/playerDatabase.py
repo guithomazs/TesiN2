@@ -1,6 +1,9 @@
 from pathlib import Path
 from enum import Enum
 import sqlite3
+import typing
+
+from database.gamesCountDatabase import CompetitiveGamesNames, TimedGamesNames
 
 if __name__ == '__main__':
     from gamesCountDatabase import GamesCountDB, GamesDB
@@ -8,7 +11,7 @@ else:
     from database.gamesCountDatabase import GamesCountDB, GamesDB
 
 
-GAMES_COUNT_TABLE = GamesDB.TABLE_NAME
+GAMES_COUNT_TABLE = GamesDB.TABLE_NAME.value
 
 class PlayerDB(Enum):
     ROOT_DIR = Path(__file__).parent
@@ -23,7 +26,7 @@ class PlayerDB(Enum):
         'password        TEXT, '
         'games_count_id  INTEGER NOT NULL, '
         'FOREIGN KEY (games_count_id) references '
-            f'"{GAMES_COUNT_TABLE}"("Player_id")'
+            f'"{GAMES_COUNT_TABLE}"("Player_id") ON DELETE CASCADE'
         ')'    
     )
 
@@ -117,23 +120,29 @@ class PlayerDBCommands():
         connection, cursor = PlayerDBCommands.connectDataBase()
         cursor.execute(PlayerDB.GET_GAME_COUNT_ID.value, (nick, ))
         game_count_id = cursor.fetchone()
+
+        print('game_count_id, quebrou aqui', game_count_id)
         cursor.close()
         connection.close()
         return GamesCountDB.getSpecificPlayerData(game_count_id)
         
     @staticmethod
-    def setGamePlayed(game, nick, won:bool = False):
+    def setGamePlayed(game: typing.Union[CompetitiveGamesNames, TimedGamesNames], nick, won:bool = False):
         connection, cursor = PlayerDBCommands.connectDataBase()
+        player_info = PlayerDBCommands.getGamesCountInfo(nick)
+        player_id = player_info[0]
+        print(game, game.name, player_id, player_info)
         sql = (
-            f'UPDATE {GAMES_COUNT_TABLE} SET {game}_played = {game}_played + 1 ' + 
-            (f', {game}_won = {game}_won + 1' if won else '') + 
-            ' WHERE nick=?'
+            f'UPDATE {GAMES_COUNT_TABLE} SET {game.name}_played = {game.name}_played + 1 ' + 
+            (f', {game.name}_won = {game.name}_won + 1' if won else '') + 
+            ' WHERE Player_id=?'
         )
-        cursor.execute(sql, [nick])
+        cursor.execute(sql, (player_id, ))
+        connection.commit()
         cursor.close()
         connection.close()
         return
-
+    
 if __name__ == '__main__':
     PlayerDBCommands.createDataBase()
     PlayerDBCommands.getAllPlayers()

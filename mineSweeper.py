@@ -1,25 +1,21 @@
 import random
 import tkinter as tk
 
-class Minas:
-    def __init__(self, master: tk.Tk, n_bombs=15, rows=15, columns=15, controller=None):
-        self.root = master
-        self.root.title('É o Minas é.')
-        self.root.resizable(False, False)
+from database.game import Game
+from database.gamesCountDatabase import TimedGamesNames
+
+class MineSweeper(Game):
+    
+    CURRENT_GAME = TimedGamesNames.MineSweeper
+
+    def __init__(self, root: tk.Tk, controller=None, player1=None, n_bombs=1, rows=15, columns=15):
+        super(MineSweeper, self).__init__(root, controller, 'É o Minas é.')
         self.num_bombas = n_bombs
         self.rows = rows
+        self.player = player1
         self.columns = columns
         self.to_be_discovered = (rows * columns) - n_bombs
-        self.controller = controller
-        if controller != None:
-            self.changeCloseButtonFunction()
         self.startGame()
-
-    def changeCloseButtonFunction(self):
-        self.root.protocol('WM_DELETE_WINDOW', self.goBackFunction)
-
-    def goBackFunction(self):
-        self.controller.goingBack(self.root)
     
     def startGame(self):
         self.label_timer = tk.Label(self.root, text='0', font='Helvetica 18 bold')
@@ -191,12 +187,6 @@ class Minas:
     def RestartGame(self, toplevel:tk.Toplevel):
         toplevel.destroy()
         self.startGame()
-
-    def close(self):
-        if self.controller != None:
-            self.controller.goingBack(self.root)
-        else:
-            self.root.destroy()
         
     def gera_bombas(self, num_bombs, protected_area=None):
         options = []
@@ -225,5 +215,5 @@ class Minas:
 
 if __name__ == '__main__':
     app = tk.Tk()
-    master = Minas(app)
+    master = MineSweeper(app)
     app.mainloop()
