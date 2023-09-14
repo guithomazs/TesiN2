@@ -1,7 +1,16 @@
 from tkinter import *
-from utils import GameSelectButton
+from tkinter import ttk
+from tkinter import messagebox
+from database.playerDatabase import PlayerDBCommands
+from configurePlayers import (
+    NewPlayer, 
+    RemovePlayer,
+    PlayerInfo
+)
+from utils import *
 
 LABEL_FRAME_FONT = 'Arial 24 bold'
+BACKGROUND_COLOR = 'black'
 class Players:
     def __init__(self, master: Tk, controller=None) -> None:
         self.root = master
@@ -13,8 +22,70 @@ class Players:
         else:
             from gamesHub import GamesHubScreen
             GamesHubScreen.createMenu(self.root)
-        label_players = LabelFrame(self.root, text='Jogadores', font=LABEL_FRAME_FONT)
-        Button(self.root, text='Tela de Player List').grid()
+        frame_buttons = Frame(self.root)
+        PseudoMenuButton(frame_buttons, 
+                         text='Cadastrar novo jogador', 
+                         command=self.createNewPlayer
+        ).grid(row=0, column=0)
+        PseudoMenuButton(frame_buttons, 
+                         text='Excluir jogador',
+                         command=self.RemoveSelectedPlayer
+        ).grid(row=0, column=1)
+        frame_buttons.grid()
+        self.label_players = LabelFrame(self.root, 
+                                        text='Jogadores', 
+                                        font=LABEL_FRAME_FONT, 
+                                        background="grey"
+        )
+        self.label_players.grid_columnconfigure(0, weight=1)
+        self.label_players.grid(sticky=NSEW)
+        self.createTreeview()
+        self.player_info_button = PseudoMenuButton(self.root, 
+                                                   text='Informações do jogador', 
+                                                   font=LABEL_FRAME_FONT,
+                                                   command=self.getPlayerData
+        )
+        self.player_info_button.grid(columnspan=99, sticky=NSEW)
+
+    def createNewPlayer(self):
+        NewPlayer(self.root, self.players_treeview)
+
+    def RemoveSelectedPlayer(self):
+        player = self.players_treeview.selection()
+        if len(player) > 1:
+            messagebox.showwarning('Aviso.', 'Apenas exclua o seu jogador por favor.')
+            return
+        elif len(player) != 1:
+            messagebox.showwarning('Aviso.', 'É necessário ao menos um jogador para excluir.')
+            return
+        nick_user = self.players_treeview.item(player, 'text')
+        # SQLCommands.getPlayerData(nick_user)
+        RemovePlayer(self.root, nick=nick_user, root_players_treeview=self.players_treeview, excluding_player=player)
+
+    def createTreeview(self):
+        self.players_treeview = PlayersTreeView(self.label_players, show='tree', height=15)
+        self.insertPlayers()
+        self.players_treeview.grid(row=0, column=0, sticky=NSEW)
+
+    def insertPlayers(self):
+        players_list = self.getPlayersList()
+        for _, player_nick, *_ in players_list:
+            self.players_treeview.insert('', 'end', values=player_nick, text=player_nick)
+    
+    def getPlayersList(self):
+        return PlayerDBCommands.getDataBasePlayers()
+
+    def getPlayerData(self):
+        player = self.players_treeview.selection()
+        if len(player) > 1:
+            messagebox.showwarning('Aviso.', 'Apenas exclua o seu jogador por favor.')
+            return
+        elif len(player) != 1:
+            messagebox.showwarning('Aviso.', 'É necessário ao menos um jogador para excluir.')
+            return
+        nick_user = self.players_treeview.item(player, 'text')
+        PlayerInfo(self.root, nick_user)
+
 
 if __name__ == '__main__':
     app = Tk()
