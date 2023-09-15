@@ -1,6 +1,10 @@
 from tkinter import *
 from enum import Enum
 
+from database.game import Game
+from database.gamesCountDatabase import CompetitiveGamesNames
+from database.playerDatabase import PlayerDBCommands
+
 EVEN_TILES = 'white'  # blocos pares
 ODD_TILES = 'brown'   # blocos ímpares
 PLAYER_ONE_COLOR = 'red'
@@ -23,25 +27,16 @@ def showMat(mat):
 def is_odd(number):
     return True if number % 2 != 0 else False   
 
-class ClassicCheckers:
-    def __init__(self, master=Tk, controller=None) -> None:
-        self.root = master
-        self.root.resizable(False, False)
-        self.root.title('Classic Checkers in tkinter')
+class ClassicCheckers(Game):
+    def __init__(self, root=Tk, controller=None, player1='Jogador 1', player2='Jogador 2') -> None:
+        super(ClassicCheckers, self).__init__(root, controller, 'Classic Checkers in tkinter')
         self.root.grid_rowconfigure(0, weight=1)
         self.root.grid_columnconfigure(0, weight=1)
+        self.player_one = player1
+        self.player_two = player2
         self.title_font = 'Helvetica 16 bold'
         self.sub_font = 'Helvetica 12'
-        self.controller = controller
-        if controller != None:
-            self.changeCloseButtonFunction()
         self.startGame()
-
-    def changeCloseButtonFunction(self):
-        self.root.protocol('WM_DELETE_WINDOW', self.goBackFunction)
-
-    def goBackFunction(self):
-        self.controller.goingBack(self.root)
 
     def startGame(self):    
         self.player_one_remaining = 12
@@ -82,8 +77,8 @@ class ClassicCheckers:
     def createHeader(self):
         self.frame_header = Frame(self.root)
 
-        self.label_player_one_cards = self._create_frame_player("Jogador 1", self.player_one_remaining, 0, columnspan=2)
-        self.label_player_two_cards = self._create_frame_player("Jogador 2", self.player_two_remaining, 4)
+        self.label_player_one_cards = self._create_frame_player(self.player_one, self.player_one_remaining, 0, columnspan=2)
+        self.label_player_two_cards = self._create_frame_player(self.player_two, self.player_two_remaining, 4)
         
         frameTurn = Frame(self.frame_header)
         self._create_title_label(frameTurn, 'Vez do jogador:')
@@ -364,15 +359,20 @@ class ClassicCheckers:
     
     def endGame(self):
         if self.player_one_remaining > 0 and self.player_two_remaining > 0:
-            textVictory = f'Vitória do jogador {1 if not self.player_turn else 2}'
-            textEnd =  f'Jogador {2 if not self.player_turn else 1} morreu no porco.'
+            winner_player = self.player_one if not self.player_turn else self.player_two
+            loser_player = self.player_two if not self.player_turn else self.player_one
+            textEnd =  f'{loser_player} morreu no porco.'
             title = 'Morte no porco!!!'
         else:
-            textVictory = f'Vitória do jogador {1 if self.player_turn else 2}'
-            textEnd =  f'Jogador {1 if not self.player_turn else 2} ficou sem peças.'
+            winner_player = self.player_one if self.player_turn else self.player_two
+            loser_player = self.player_one if not self.player_turn else self.player_two
+            textEnd =  f'{loser_player} ficou sem peças.'
             title = 'Fim de jogo!!!'
+
+        PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.ClassicCheckers, winner_player, won=True)
+        PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.ClassicCheckers, loser_player)
+        textVictory = f'Vitória de: {winner_player}'
         topLevelWinner = Toplevel(self.root)
-        topLevelWinner.grab_set()
         topLevelWinner.resizable(False, False)
         topLevelWinner.protocol("WM_DELETE_WINDOW", self.close)
         topLevelWinner.title(title)
@@ -386,12 +386,7 @@ class ClassicCheckers:
                     command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=NSEW)
         Button(topLevelWinner, text='Sair', font='Helvetica 12 bold',
                     command=self.close).grid(row=2, column=1, sticky=NSEW, columnspan=2)
-        
-    def close(self):
-        if self.controller != None:
-            self.controller.goingBack(self.root)
-        else:
-            self.root.destroy()
+        topLevelWinner.grab_set()
 
     def RestartGame(self, toplevel:Toplevel):
         toplevel.destroy()
