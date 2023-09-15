@@ -83,21 +83,31 @@ class PlayerDBCommands():
                 if game_name in CompetitiveGamesNames._member_names_ else 
             f'game.{game_name}_best_time'
         )
-        game_order = 'ASC' if game_name in CompetitiveGamesNames._member_names_ else 'DESC'
-        GET_GAME_INFO = (
+        game_order = 'DESC' if game_name in CompetitiveGamesNames._member_names_ else 'ASC'
+        sql1 = (
             f'SELECT p.player_id, p.nick, {game_column} '  
             f'FROM {TABLE_NAME} p '
             f'INNER JOIN {GAMES_COUNT_TABLE} game '
             f'ON p.games_count_id = game.Player_id ' 
+            f'WHERE {game_column} <> 0 '
             f'ORDER BY {game_column} {game_order}'  
         )
-        cursor.execute(GET_GAME_INFO)
-        players = cursor.fetchall()
+        cursor.execute(sql1)
+        valued_players = cursor.fetchall()
+        sql2 = (
+            f'SELECT p.player_id, p.nick, {game_column} '  
+            f'FROM {TABLE_NAME} p '
+            f'INNER JOIN {GAMES_COUNT_TABLE} game '
+            f'ON p.games_count_id = game.Player_id '
+            f'WHERE {game_column} = 0 '
+            f'ORDER BY p.player_id ASC'  
+        )
+        cursor.execute(sql2)
+        non_valued_players = cursor.fetchall()
         connection.commit()
         cursor.close()
         connection.close()
-        # print(players)
-        return players
+        return valued_players + non_valued_players
 
     @staticmethod
     def removePlayer(nick):
