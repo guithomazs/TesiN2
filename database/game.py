@@ -36,3 +36,10 @@ class Game:
     def endGame(self, players: typing.List[Players]):
         for player in players:
             PlayerDBCommands.setGamePlayed(self.CURRENT_GAME, player.name, player.won)
+        
+    @staticmethod
+    def isCompetitiveGame(game):
+        if game.__name__ in CompetitiveGamesNames._member_names_:
+            return True
+        return False
+    

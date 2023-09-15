@@ -32,13 +32,13 @@ class Players:
                          command=self.RemoveSelectedPlayer
         ).grid(row=0, column=1)
         frame_buttons.grid()
-        self.label_players = LabelFrame(self.root, 
+        self.label_frame_players = LabelFrame(self.root, 
                                         text='Jogadores', 
                                         font=LABEL_FRAME_FONT, 
                                         background="grey"
         )
-        self.label_players.grid_columnconfigure(0, weight=1)
-        self.label_players.grid(sticky=NSEW)
+        self.label_frame_players.grid_columnconfigure(0, weight=1)
+        self.label_frame_players.grid(sticky=NSEW)
         self.createTreeview()
         self.player_info_button = PseudoMenuButton(self.root, 
                                                    text='Informações do jogador', 
@@ -63,7 +63,7 @@ class Players:
         RemovePlayer(self.root, nick=nick_user, root_players_treeview=self.players_treeview, excluding_player=player)
 
     def createTreeview(self):
-        self.players_treeview = PlayersTreeView(self.label_players, show='tree', height=15)
+        self.players_treeview = PlayersTreeView(self.label_frame_players, show='tree', height=15)
         self.insertPlayers()
         self.players_treeview.grid(row=0, column=0, sticky=NSEW)
 

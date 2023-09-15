@@ -82,9 +82,10 @@ class GamesCountDB():
         connection, cursor = GamesCountDB.connectDataBase()
         cursor.execute(GamesDB.LIST_PLAYERS.value)
         connection.commit()
+        players = cursor.fetchall()
         cursor.close()
         connection.close()
-        return cursor.fetchall()
+        return players
     
     @staticmethod
     def removePlayer(nick):
@@ -109,7 +110,7 @@ class GamesCountDB():
         cursor.execute(GamesDB.CREATE_TABLE.value)
         connection.commit()
         cursor.execute(GamesDB.INSERT_PLAYER.value)
-        print("LAST_ROW:", cursor.lastrowid)
+        # print("LAST_ROW:", cursor.lastrowid)
         connection.commit()
         cursor.close()
         connection.close()
@@ -137,19 +138,18 @@ class GamesCountDB():
 
     @staticmethod
     def getSpecificPlayerData(player_id):
-        GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        print('quebrou aqui', player_id)
         cursor.execute(GamesDB.SPECIFIC_PLAYER_DATA.value, (player_id))
         user_data = cursor.fetchone()
         cursor.close()
         connection.close()
+        # print('user_data ->', user_data, player_id)
         return user_data
     
 
 if __name__ == '__main__':
     GamesCountDB.createDataBase()
     # GamesCountDB.createNewPlayer()
-    # GamesCountDB.getLastPlayer()
-    # GamesCountDB.getSpecificPlayerData("1")
+    GamesCountDB.getLastPlayer()
+    GamesCountDB.getDataBasePlayers()
     GamesCountDB.printAllPlayers()

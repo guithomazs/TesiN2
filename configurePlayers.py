@@ -67,7 +67,6 @@ class NewPlayer(Toplevel):
             try:
                 GamesCountDB.createNewPlayer()
                 game_count_id = GamesCountDB.getLastPlayer()[0]
-                print("LAST_ROW2:", game_count_id)
                 self.cursor.execute(PlayerDB.INSERIR_JOGADOR.value, (nick, pwd, game_count_id))
                 self.cursor.lastrowid
                 if self.root_players_treeview != None:

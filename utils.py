@@ -357,3 +357,26 @@ class PlayersTreeView(ttk.Treeview):
         )
         style.theme_use("clam")
         style.map("Treeview", background=[('selected', 'green')])
+
+    
+
+TREEVIEW_INTERN_FONT = 'Helvetica 12 bold'
+class LeaderboardsTreeView(ttk.Treeview):
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        treeview_scrollbar = tk.Scrollbar(master, 
+                                       orient=tk.VERTICAL, 
+                                       command=self.yview
+        )
+        treeview_scrollbar.grid(row=0, column=1, sticky='ns')
+        self.config(yscrollcommand=treeview_scrollbar.set)
+
+        style = ttk.Style()
+        style.theme_use('clam')
+        style.configure("Treeview", background='black', 
+                        fieldbackground='black',
+                        foreground='#3d35ba',
+                        font=TREEVIEW_INTERN_FONT,
+        )
+        style.theme_use("clam")
+        style.map("Treeview", background=[('selected', 'green')])
