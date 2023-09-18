@@ -88,10 +88,10 @@ class GamesCountDB():
         return players
     
     @staticmethod
-    def removePlayer(nick):
+    def removePlayer(player_id):
         GamesCountDB.createDataBase()
         connection, cursor = GamesCountDB.connectDataBase()
-        cursor.execute(GamesDB.DELETE_ITEM.value, [nick])
+        cursor.execute(GamesDB.DELETE_ITEM.value, (player_id))
         connection.commit()
         cursor.close()
         connection.close()
@@ -146,8 +146,27 @@ class GamesCountDB():
         # print('user_data ->', user_data, player_id)
         return user_data
     
+    @staticmethod
+    def clearDataBase():
+        connection, cursor = GamesCountDB.connectDataBase()
+        cursor.execute(GamesDB.DELETE_ALL.value)
+        connection.commit()
+        connection.close()
+
+    @staticmethod
+    def adminSetValue(column, value, player_id):
+        connection, cursor = GamesCountDB.connectDataBase()
+        sql = (
+            f'UPDATE {GamesDB.TABLE_NAME.value} SET {column} = {value} WHERE Player_id = ?'
+        )
+        cursor.execute(sql, (player_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+
 
 if __name__ == '__main__':
+    # GamesCountDB.clearDataBase()
     GamesCountDB.createDataBase()
     # GamesCountDB.createNewPlayer()
     GamesCountDB.getLastPlayer()

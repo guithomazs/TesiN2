@@ -4,9 +4,9 @@ import sqlite3
 import typing
 
 if __name__ == '__main__':
-    from gamesCountDatabase import GamesCountDB, GamesDB, CompetitiveGamesNames
+    from gamesCountDatabase import GamesCountDB, GamesDB, CompetitiveGamesNames, TimedGamesNames
 else:
-    from database.gamesCountDatabase import GamesCountDB, GamesDB, CompetitiveGamesNames
+    from database.gamesCountDatabase import GamesCountDB, GamesDB, CompetitiveGamesNames, TimedGamesNames
 
 
 GAMES_COUNT_TABLE = GamesDB.TABLE_NAME.value
@@ -53,9 +53,25 @@ class PlayerDB(Enum):
         'WHERE nick = ?'
     )
 
+    GET_ALL_PLAYERS_NICKS = (
+        f'SELECT nick FROM {TABLE_NAME}'
+    )
+
     GET_GAME_COUNT_ID = (
         f'SELECT games_count_id FROM {TABLE_NAME} '
         'WHERE nick = ?'
+    )
+
+    UPDATE_NICK = (
+        f'UPDATE {TABLE_NAME} SET nick = ? WHERE player_id = ?'
+    )
+
+    UPDATE_PASSWORD = (
+        f'UPDATE {TABLE_NAME} SET password = ? WHERE player_id = ?'
+    )
+
+    get_nick_and_pwd = (
+        f'SELECT nick, password FROM {TABLE_NAME} WHERE nick = ?'
     )
 
 
@@ -113,8 +129,12 @@ class PlayerDBCommands():
     def removePlayer(nick):
         PlayerDBCommands.createDataBase()
         connection, cursor = PlayerDBCommands.connectDataBase()
+        player_id = PlayerDBCommands.getGamesCountID(nick)
+        GamesCountDB.removePlayer(player_id)
         cursor.execute(PlayerDB.DELETE_ITEM.value, (nick, ))
         connection.commit()
+        cursor.close()
+        connection.close()
 
     @staticmethod
     def getPlayerData(nick):
@@ -123,6 +143,7 @@ class PlayerDBCommands():
         cursor.execute(PlayerDB.GET_SPECIFIC_PLAYER.value, (nick, ))
         player = cursor.fetchone()
         connection.commit()
+        return player
     
     @staticmethod
     def createDataBase():
@@ -131,12 +152,24 @@ class PlayerDBCommands():
         connection.commit()
 
     @staticmethod
-    def getAllPlayers():
+    def getAllPlayersData():
         connection, cursor = PlayerDBCommands.connectDataBase()
         cursor.execute(PlayerDB.LIST_PLAYERS.value)
-        print(cursor.fetchall())
+        list_of_players = cursor.fetchall()
+        # print(list_of_players)
         cursor.close()
         connection.close()
+        return list_of_players
+    
+    @staticmethod
+    def getAllPlayersNicks():
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        cursor.execute(PlayerDB.GET_ALL_PLAYERS_NICKS.value)
+        list_of_players = cursor.fetchall()
+        # print(list_of_players)
+        cursor.close()
+        connection.close()
+        return list_of_players
 
     @staticmethod
     def insertPlayer(nick, password, games_counter):
@@ -158,11 +191,18 @@ class PlayerDBCommands():
         return GamesCountDB.getSpecificPlayerData(game_count_id)
         
     @staticmethod
-    # def setGamePlayed(game: typing.Union[CompetitiveGamesNames, TimedGamesNames], nick, won:bool = False):
-    def setGamePlayed(game, nick, won:bool = False):
+    def getGamesCountID(nick):
         connection, cursor = PlayerDBCommands.connectDataBase()
-        player_info = PlayerDBCommands.getGamesCountInfo(nick)
-        player_id = player_info[0]
+        cursor.execute(PlayerDB.GET_GAME_COUNT_ID.value, (nick, ))
+        game_count_id = cursor.fetchone()
+        cursor.close()
+        connection.close()
+        return game_count_id
+    
+    @staticmethod
+    def setGamePlayed(game: typing.Union[CompetitiveGamesNames, TimedGamesNames], nick, won:bool = False):
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        player_id = PlayerDBCommands.getIDByNick(nick)
         sql = (
             f'UPDATE {GAMES_COUNT_TABLE} SET {game.name}_played = {game.name}_played + 1 ' + 
             (f', {game.name}_won = {game.name}_won + 1' if won else '') + 
@@ -172,9 +212,60 @@ class PlayerDBCommands():
         connection.commit()
         cursor.close()
         connection.close()
-        return
+
+    @staticmethod
+    def setColumnValue(player_nick, game_count_column, column_value):
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        player_games_count_id = PlayerDBCommands.getGamesCountID(player_nick)
+        GamesCountDB.adminSetValue(game_count_column, column_value, player_games_count_id)
+        connection.commit()
+        cursor.close()
+        connection.close()
     
+    @staticmethod
+    def getIDByNick(nick):
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        player_info = PlayerDBCommands.getPlayerData(nick)
+        player_id = player_info[0]
+        cursor.close()
+        connection.close()
+        return player_id
+    
+    @staticmethod
+    def updateNickname(nick, new_nick):
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        player_id = PlayerDBCommands.getIDByNick(nick)
+        cursor.execute(PlayerDB.UPDATE_NICK.value, (new_nick, player_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+    @staticmethod
+    def updatePassword(nick, new_password):
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        player_id = PlayerDBCommands.getIDByNick(nick)
+        cursor.execute(PlayerDB.UPDATE_PASSWORD.value, (new_password, player_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+    @staticmethod
+    def clearDataBase():
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        cursor.execute(PlayerDB.DELETE_ALL.value)
+        connection.commit()
+        connection.close()
+
 if __name__ == '__main__':
     PlayerDBCommands.createDataBase()
-    PlayerDBCommands.getAllPlayers()
-    aa = PlayerDBCommands.getGamesCountInfo("521")
+    PlayerDBCommands.getAllPlayersData()
+    PlayerDBCommands.getAllPlayersNicks()
+    con, cursor = PlayerDBCommands.connectDataBase()
+    cursor.execute(PlayerDB.get_nick_and_pwd.value, ('521', )) 
+    nick, senha = cursor.fetchone()
+    teste_senha = 'senha aqui'
+    if teste_senha == senha:
+        print('ta certo')
+    else:
+        print('nada a ver')
+    con.close()

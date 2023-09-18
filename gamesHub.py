@@ -6,7 +6,7 @@ from brazilianCheckers import BrazilianCheckers
 from mineSweeper import MineSweeper
 from ticTacToe import TicTacToe
 from tileMatching import TileMatching
-from playerListScreen import Players
+from ListPlayersScreen import Players
 from leaderboards import Leaderboards
 from database.playerDatabase import PlayerDBCommands
 from database.gamesCountDatabase import (
@@ -39,8 +39,8 @@ class GamesHubScreen:
         pseudo_menu = Frame(root)
         PseudoMenuButton(pseudo_menu, text='🏠',
                          command=lambda: GamesHubScreen.goingBack(root)).grid(row=0, column=0, sticky=NSEW)
-        WifiButton(pseudo_menu, text='WIFI',
-                                                                       ).grid(row=1, column=0, sticky=NSEW)
+        # WifiButton(pseudo_menu, text='WIFI',
+        #                                                                ).grid(row=1, column=0, sticky=NSEW)
         PseudoMenuButton(pseudo_menu, text='Jogadores',
                          command=lambda: GamesHubScreen.changeCurrentScreen(Players, root)).grid(row=0, column=1, rowspan=2, sticky=NSEW)
         PseudoMenuButton(pseudo_menu, text='Leaderboards',

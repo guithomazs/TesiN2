@@ -1,3 +1,4 @@
+from re import sub
 import tkinter as tk
 from tkinter import ttk
 
@@ -380,3 +381,34 @@ class LeaderboardsTreeView(ttk.Treeview):
         )
         style.theme_use("clam")
         style.map("Treeview", background=[('selected', 'green')])
+
+PLAYER_INFO_FONT = 'Helvetica 22 bold'
+class OnlyDigitsEntry(tk.Entry):
+    def __init__(self, master, *args, **kwargs):
+        super().__init__(master, *args, **kwargs)
+        mycmd = (self.register(self.valida), '%P')
+        # inval = self.register(self.invalido)  # -- não necessário criar uma de ivcmd
+        self.text = tk.StringVar()
+        self.ent = tk.Entry(self, *args, **kwargs)
+        self.ent.configure(validate='key', validatecommand=mycmd, textvariable=self.text)
+        self.configure(validate='key', validatecommand=mycmd, textvariable=self.text)
+        self.grid()
+    
+    def onlyDigit(self, string):
+        digits = '1234567890'
+        for i in string:
+            if i not in digits:
+                return False
+        return True
+
+    def valida(self, String_after):
+        size = len(String_after)
+        if (self.onlyDigit(String_after) or String_after=="") and size <= 5:
+            return True
+        else:
+            return False
+        
+if __name__ == '__main__':
+    a = tk.Tk()
+    OnlyDigitsEntry(a)
+    a.mainloop()
