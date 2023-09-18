@@ -256,16 +256,20 @@ class PlayerDBCommands():
         connection.commit()
         connection.close()
 
+    @staticmethod
+    def getNickByID(player_id):
+        connection, cursor = PlayerDBCommands.connectDataBase()
+        sql = f'SELECT nick FROM {TABLE_NAME} WHERE player_id = ?'
+        cursor.execute(sql, [player_id])
+        player_nick = cursor.fetchone()[0]
+        # print(player_nick)
+        cursor.close()
+        connection.close()
+        return player_nick
+
+
 if __name__ == '__main__':
     PlayerDBCommands.createDataBase()
     PlayerDBCommands.getAllPlayersData()
     PlayerDBCommands.getAllPlayersNicks()
-    con, cursor = PlayerDBCommands.connectDataBase()
-    cursor.execute(PlayerDB.get_nick_and_pwd.value, ('521', )) 
-    nick, senha = cursor.fetchone()
-    teste_senha = 'senha aqui'
-    if teste_senha == senha:
-        print('ta certo')
-    else:
-        print('nada a ver')
-    con.close()
+    PlayerDBCommands.getNickByID('3')

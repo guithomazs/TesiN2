@@ -43,3 +43,6 @@ class Game:
             return True
         return False
     
+    def getGameName(self):
+        return self.__class__.__name__
+    

@@ -2,6 +2,7 @@ from tkinter import *
 from enum import Enum
 
 from database.game import Game
+from database.gameHistory import GamesHistoryCommands
 from database.gamesCountDatabase import CompetitiveGamesNames
 from database.playerDatabase import PlayerDBCommands
 
@@ -371,6 +372,11 @@ class ClassicCheckers(Game):
 
         PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.ClassicCheckers, winner_player, won=True)
         PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.ClassicCheckers, loser_player)
+        player_one_id = PlayerDBCommands.getIDByNick(self.player_one)
+        player_two_id = PlayerDBCommands.getIDByNick(self.player_two)
+        winner_player_id = PlayerDBCommands.getIDByNick(winner_player)
+        game_name = self.getGameName()
+        GamesHistoryCommands.insertNewMatch(game_name, player_one_id, player_two_id, winner_player_id)
         textVictory = f'Vitória de: {winner_player}'
         topLevelWinner = Toplevel(self.root)
         topLevelWinner.resizable(False, False)

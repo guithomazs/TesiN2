@@ -1,6 +1,7 @@
 from tkinter import *
 
 from database.game import Game
+from database.gameHistory import GamesHistoryCommands
 from database.gamesCountDatabase import CompetitiveGamesNames, GamesDB
 from database.playerDatabase import PlayerDBCommands
 
@@ -119,10 +120,19 @@ class TicTacToe(Game):
             loser_player = self.player_two if self.winner == 1 else self.player_one
             PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.TicTacToe, winner_player, won=True)
             PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.TicTacToe, loser_player)
+            player_one_id = PlayerDBCommands.getIDByNick(self.player_one)
+            player_two_id = PlayerDBCommands.getIDByNick(self.player_two)
+            winner_player_id = PlayerDBCommands.getIDByNick(winner_player)
+            game_name = self.getGameName()
+            GamesHistoryCommands.insertNewMatch(game_name, player_one_id, player_two_id, winner_player_id)
             Label(topLevelWinner, text=f'Vitória de: {winner_player}.', font='Helvetica 14 bold').grid(columnspan=3)
         else:
             PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.TicTacToe, self.player_one)
             PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.TicTacToe, self.player_two)
+            player_one_id = PlayerDBCommands.getIDByNick(self.player_one)
+            player_two_id = PlayerDBCommands.getIDByNick(self.player_two)
+            game_name = self.getGameName()
+            GamesHistoryCommands.insertNewMatch(game_name, player_one_id, player_two_id)
             Label(topLevelWinner, text=f'Empate!', font='Helvetica 14 bold').grid(columnspan=3)
         Button(topLevelWinner, text='Jogar Novamente', font='Helvetica 12 bold',
                     command=lambda wm=topLevelWinner: self.RestartGame(wm)).grid(sticky=NSEW)

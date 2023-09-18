@@ -6,6 +6,7 @@ import time
 from database.game import Game
 from database.gamesCountDatabase import CompetitiveGamesNames
 from database.playerDatabase import PlayerDBCommands
+from database.gameHistory import GamesHistoryCommands
 
 GAME_ROWS = 5
 GAME_COLUMNS = 6
@@ -203,6 +204,11 @@ class TileMatching(Game):
         loser_player = self.player_two if len(self.player_one_cards) > len(self.player_two_cards) else self.player_one
         PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.TileMatching, winner_player, won=True)
         PlayerDBCommands.setGamePlayed(CompetitiveGamesNames.TileMatching, loser_player)
+        player_one_id = PlayerDBCommands.getIDByNick(self.player_one)
+        player_two_id = PlayerDBCommands.getIDByNick(self.player_two)
+        winner_player_id = PlayerDBCommands.getIDByNick(winner_player)
+        game_name = self.getGameName()
+        GamesHistoryCommands.insertNewMatch(game_name, player_one_id, player_two_id, winner_player_id)
         Label(top_level_winner,
                     text=f'Vitória de: {winner_player}', 
                     font='Helvetica 14 bold').grid(columnspan=3)
