@@ -41,7 +41,7 @@ class GamesHistoryDB(Enum):
 
     PLAYER_MATCHES = (
         f'SELECT player_one_id, match_game, player_two_id, winner_player_id FROM {TABLE_NAME}'
-        ' WHERE player_one_id = ? OR player_two_id = ?'
+        ' WHERE player_one_id = ? OR player_two_id = ? ORDER BY match_id DESC'
     )
 
 class GamesHistoryCommands():
@@ -96,7 +96,7 @@ class GamesHistoryCommands():
         connection, cursor = GamesHistoryCommands.connectDataBase()
         cursor.execute(GamesHistoryDB.PLAYER_MATCHES.value, [player_id, player_id])
         player_history = cursor.fetchall()
-        print(player_history)
+        # print(player_history)
         connection.commit()
         cursor.close()
         connection.close()

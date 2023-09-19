@@ -3,6 +3,7 @@ from utils import MyButton, OnlyDigitsEntry
 import sqlite3
 from database.playerDatabase import PlayerDBCommands, PlayerDB
 from database.gamesCountDatabase import GamesCountDB
+from historyScreen import PlayerHistory
 
 WINDOW_BG = 'white'
 NEW_PLAYER_FONT = 'Helvetica 22 bold'
@@ -258,13 +259,19 @@ class PlayerInfo(Toplevel):
 
         btn_edit_nick = MyButton(self.screen_frame, text='Editar nick do usuário', command=lambda : self.editUser('nick'))
         btn_edit_pwd = MyButton(self.screen_frame, text='Editar senha do usuário', command=lambda : self.editUser('password'))
+        btn_history = MyButton(self.screen_frame, text='Histórico do jogador', command=self.showHistory)
         btn_close = MyButton(self.screen_frame, text='Fechar', command=self.close)
 
         self.frame_data.grid(sticky=NSEW, columnspan=2)
         self.screen_frame.grid(sticky=NSEW)
         btn_edit_nick.grid(row=2, column=0, columnspan=2, sticky=NSEW, pady=2)
         btn_edit_pwd.grid(row=3, column=0, columnspan=2, sticky=NSEW, pady=2)
-        btn_close.grid(row=4, column=0, columnspan=2, sticky=NSEW)
+        btn_history.grid(row=4, column=0, columnspan=2, sticky=NSEW, pady=2)
+        btn_close.grid(row=5, column=0, columnspan=2, sticky=NSEW)
+    
+    def showHistory(self):
+        player_id = PlayerDBCommands.getIDByNick(self.lbl_nick.cget("text"))
+        PlayerHistory(self.root, player_id=player_id)
 
     def editUser(self, edit_type):
         EditPlayer(self.root, 

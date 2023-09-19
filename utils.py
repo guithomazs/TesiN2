@@ -314,6 +314,8 @@ class GridInGameTitleBar(GridMainTitleBar):
 class GridScrollableFrame(tk.Frame):
     def __init__(self, container, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
         self.canvas = tk.Canvas(self)
         self.canvas.config(background='black')
         scrollbar = tk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
